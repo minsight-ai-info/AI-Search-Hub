@@ -1,5 +1,3 @@
-# AI Search Hub
-
 <div align="center">
 
 # AI Search Hub
@@ -20,7 +18,7 @@
 
 ---
 
-## What is AI Search Hub?
+## A Single Entry for Platform-Native AI Search
 
 AI Search Hub is an open-source skill that turns fragmented AI search surfaces into one reusable search hub.
 
@@ -38,7 +36,7 @@ Its job is simple:
 
 ---
 
-## Why this project?
+## A Lighter Search Stack
 
 Most "all-web search" systems eventually become the same heavy engineering story:
 
@@ -59,7 +57,7 @@ AI Search Hub does not rebuild that stack. It orchestrates it.
 
 ---
 
-## Why it is lighter
+## Traditional Workflow vs AI Search Hub
 
 | Traditional workflow | AI Search Hub |
 |---|---|
@@ -111,7 +109,7 @@ The final output is meant for agents, research pipelines, monitoring systems, an
 
 ---
 
-## What sources can it cover?
+## Search Worlds It Can Reach
 
 By reusing platform-native search capabilities, AI Search Hub can indirectly cover many major sources, such as:
 
