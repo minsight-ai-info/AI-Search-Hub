@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.DS_Store
+
+out/
+chrome_debug_profile_skill/
+scripts/chrome_debug_profile_skill/

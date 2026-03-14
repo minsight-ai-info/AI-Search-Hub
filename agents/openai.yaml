@@ -1,0 +1,7 @@
+interface:
+  display_name: "Web Chat Runner"
+  short_description: "Run Yuanbao, LongCat, and Doubao chat scripts"
+  default_prompt: "Use $web-chat-runner to run one of the repository chat sites with automatic Chrome debug startup and login waiting."
+
+policy:
+  allow_implicit_invocation: true
