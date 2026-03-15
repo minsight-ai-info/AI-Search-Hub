@@ -30,9 +30,11 @@
 
 ---
 
-## A Single Entry for Platform-Native AI Search
+## Plug Big-Tech Native Search into Your OpenClaw
 
 AI Search Hub is an open-source skill that turns fragmented AI search surfaces into one reusable search hub.
+
+It lets you directly leverage search surfaces and search frameworks already refined by major AI platforms, then route tech updates, public sentiment, and daily planning into your own agents and workflows.
 
 It is not trying to make you maintain:
 
@@ -44,7 +46,7 @@ It is not trying to make you maintain:
 
 Its job is simple:
 
-> **Aggregate the search capabilities major AI platforms have already optimized, and make them reusable for agents, workflows, and automation systems.**
+> **Turn multiple AI search surfaces into one entrypoint, and directly leverage search systems already refined by major platforms.**
 
 <table width="100%">
   <tr>
