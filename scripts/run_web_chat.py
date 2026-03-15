@@ -48,19 +48,19 @@ SITE_CONFIG = {
     },
     "qwen": {
         "mode": "generic",
-        "script": "scripts/generic_web_chat_playwright.py",
+        "script": "scripts/qwen_playwright.py",
         "url": "https://chat.qwen.ai/",
         "default_output": "out/qwen_answer.txt",
     },
     "gemini": {
         "mode": "generic",
-        "script": "scripts/generic_web_chat_playwright.py",
+        "script": "scripts/gemini_playwright.py",
         "url": "https://gemini.google.com/app",
         "default_output": "out/gemini_answer.txt",
     },
     "grok": {
         "mode": "generic",
-        "script": "scripts/generic_web_chat_playwright.py",
+        "script": "scripts/grok_playwright.py",
         "url": "https://grok.com/",
         "default_output": "out/grok_answer.txt",
     },
@@ -666,8 +666,6 @@ def build_site_command(args: argparse.Namespace, repo_root: Path, ws_url: str) -
         return [
             sys.executable,
             str(script_path),
-            "--site",
-            args.site,
             "--question",
             args.prompt,
             "--cdp-url",

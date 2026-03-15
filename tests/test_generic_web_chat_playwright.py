@@ -8,7 +8,7 @@ SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-import generic_web_chat_playwright as generic_web_chat  # noqa: E402
+import site_chat_core as generic_web_chat  # noqa: E402
 
 
 class RecordingKeyboard:
@@ -124,6 +124,13 @@ class GenericWebChatPlaywrightTests(unittest.TestCase):
 
     def test_supported_sites_include_qwen_gemini_and_grok(self) -> None:
         self.assertTrue({"qwen", "gemini", "grok"}.issubset(generic_web_chat.SITE_CONFIG))
+
+    def test_resolve_site_name_uses_default_site_for_wrappers(self) -> None:
+        self.assertEqual(generic_web_chat.resolve_site_name(None, "qwen"), "qwen")
+
+    def test_resolve_site_name_rejects_mismatched_wrapper_site(self) -> None:
+        with self.assertRaises(ValueError):
+            generic_web_chat.resolve_site_name("grok", "qwen")
 
     def test_gemini_skips_pre_send_login_gate(self) -> None:
         self.assertFalse(generic_web_chat.should_wait_until_ready("gemini"))

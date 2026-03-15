@@ -1,16 +1,18 @@
 ---
-name: web-chat-runner
-description: Standardize execution of the Yuanbao, LongCat, Doubao, Qwen, Gemini, and Grok chat scripts in this repository. Use this skill when the user wants to ask one of those sites a prompt, auto-start or attach to a Chrome DevTools session on port 9222, seed an isolated debug browser profile from the user's local browser data, detect whether login is required, wait for the user to finish logging in if needed, and then continue automatically.
+name: ai-search-hub
+description: Run the AI Search Hub browser automation scripts for Yuanbao, LongCat, Doubao, Qwen, Gemini, and Grok. Use this skill when the user wants to ask one of those sites a prompt, auto-start or attach to a Chrome DevTools session on port 9222, seed an isolated debug browser profile from the user's local browser data, detect whether login is required, wait for the user to finish logging in if needed, and then continue automatically.
 ---
 
-# Web Chat Runner
+# AI Search Hub
 
-Use this skill only for this repository's chat automation scripts:
+Use this skill only for this repository's AI Search Hub browser automation scripts:
 
 - `scripts/yuanbao_playwright.py`
 - `scripts/longcat_playwright.py`
 - `scripts/doubao_playwright.py`
-- `scripts/generic_web_chat_playwright.py`
+- `scripts/qwen_playwright.py`
+- `scripts/gemini_playwright.py`
+- `scripts/grok_playwright.py`
 
 ## When To Use
 
@@ -62,7 +64,7 @@ It does the following:
 - `doubao`: requires a logged-in session. The visitor page usually does not answer prompts.
 - `yuanbao`: login may appear as a modal with QQ, WeChat, or last-login buttons even when the page shell is visible.
 - `longcat`: the wrapper prefers a new chat before sending unless `--no-new-chat` is requested downstream.
-- `qwen`, `gemini`, `grok`: use the generic site driver. `gemini` first targets the visible composer and attempts the send once before falling back to the login-wait loop, because the landing page exposes a real textbox even when the account is not yet in a usable chat state.
+- `qwen`, `gemini`, `grok`: each has its own Playwright entry script backed by a shared site-chat core. `gemini` first targets the visible composer and attempts the send once before falling back to the login-wait loop, because the landing page exposes a real textbox even when the account is not yet in a usable chat state.
 
 ## Constraints
 

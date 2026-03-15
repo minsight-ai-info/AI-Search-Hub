@@ -154,11 +154,19 @@ SITE_CONFIG = {
 }
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(default_site: Optional[str] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Open a supported web chat site, send one question, and wait for the final answer."
+        description=(
+            f"Open the {default_site} chat site, send one question, and wait for the final answer."
+            if default_site
+            else "Open a supported web chat site, send one question, and wait for the final answer."
+        )
     )
-    parser.add_argument("--site", choices=sorted(SITE_CONFIG), required=True, help="Target site.")
+    parser.add_argument(
+        "--site",
+        choices=sorted(SITE_CONFIG),
+        help=argparse.SUPPRESS if default_site else "Target site.",
+    )
     parser.add_argument("--question", required=True, help="Question to send.")
     parser.add_argument("--output", help="Optional file path to store the final answer.")
     parser.add_argument("--headless", action="store_true", help="Run browser in headless mode.")
@@ -184,6 +192,21 @@ def parse_args() -> argparse.Namespace:
         help="Fetch webSocketDebuggerUrl from an existing Chrome DevTools HTTP endpoint, for example http://127.0.0.1:9222.",
     )
     return parser.parse_args()
+
+
+def resolve_site_name(requested_site: Optional[str], default_site: Optional[str] = None) -> str:
+    if default_site:
+        if default_site not in SITE_CONFIG:
+            raise ValueError(f"Unsupported default site: {default_site}")
+        if requested_site and requested_site != default_site:
+            raise ValueError(
+                f"Wrapper is locked to {default_site}, but received mismatched --site {requested_site}."
+            )
+        return default_site
+
+    if not requested_site:
+        raise ValueError("--site is required when no wrapper default site is provided.")
+    return requested_site
 
 
 def normalize_text(text: str, noise_substrings: Optional[Iterable[str]] = None) -> str:
@@ -677,17 +700,18 @@ def ask_site(
                 context.close()
 
 
-def main() -> int:
+def main(default_site: Optional[str] = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     if hasattr(sys.stderr, "reconfigure"):
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-    args = parse_args()
+    args = parse_args(default_site)
+    site_name = resolve_site_name(args.site, default_site)
 
     try:
         answer = ask_site(
-            site_name=args.site,
+            site_name=site_name,
             question=args.question,
             profile_dir=args.profile_dir,
             headless=args.headless,

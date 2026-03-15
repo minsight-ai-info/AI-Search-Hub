@@ -36,7 +36,7 @@ class RunWebChatTests(unittest.TestCase):
         resolved = run_web_chat.find_repo_root(str(PROJECT_ROOT))
         self.assertEqual(resolved, PROJECT_ROOT)
 
-    def test_build_site_command_routes_qwen_to_generic_driver(self) -> None:
+    def test_build_site_command_routes_qwen_to_dedicated_driver(self) -> None:
         args = SimpleNamespace(
             site="qwen",
             prompt="hello",
@@ -51,8 +51,8 @@ class RunWebChatTests(unittest.TestCase):
         command = run_web_chat.build_site_command(args, PROJECT_ROOT, "ws://example.test/devtools/browser/abc")
 
         self.assertEqual(command[0], sys.executable)
-        self.assertEqual(command[1], str(PROJECT_ROOT / "scripts" / "generic_web_chat_playwright.py"))
-        self.assertEqual(command[2:6], ["--site", "qwen", "--question", "hello"])
+        self.assertEqual(command[1], str(PROJECT_ROOT / "scripts" / "qwen_playwright.py"))
+        self.assertEqual(command[2:4], ["--question", "hello"])
         self.assertIn("--cdp-url", command)
         self.assertIn("ws://example.test/devtools/browser/abc", command)
         self.assertIn(str(PROJECT_ROOT / "out" / "qwen_answer.txt"), command)
