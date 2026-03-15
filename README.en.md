@@ -53,30 +53,30 @@ Its job is simple:
 <table width="100%">
   <thead>
     <tr>
-      <th align="left" width="42%">Traditional workflow</th>
-      <th align="left" width="58%">AI Search Hub</th>
+      <th align="left" width="50%">Traditional workflow</th>
+      <th align="left" width="50%">AI Search Hub</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>🔧 <strong>Build crawlers yourself</strong><br><sub>You own the scraping, parsing, and long-term maintenance burden</sub></td>
-      <td>⚡ <strong>Reuse platform-native search</strong><br><sub>Plug into search surfaces that major platforms already optimized</sub></td>
+      <td>🔧 <strong>Build crawlers yourself</strong><br><sub>You own scraping, parsing, and long-term maintenance</sub></td>
+      <td>⚡ <strong>Reuse platform-native search</strong><br><sub>Plug directly into mature search surfaces</sub></td>
     </tr>
     <tr>
-      <td>🧩 <strong>One automation flow per provider</strong><br><sub>Every new source adds another integration to maintain</sub></td>
-      <td>🚀 <strong>One query, multi-provider dispatch</strong><br><sub>Use one entrypoint to orchestrate multiple search providers</sub></td>
+      <td>🧩 <strong>One automation flow per provider</strong><br><sub>Every new source adds one more integration to maintain</sub></td>
+      <td>🚀 <strong>One query, multi-provider dispatch</strong><br><sub>Use one entrypoint for multiple search providers</sub></td>
     </tr>
     <tr>
       <td>🛡️ <strong>Constant anti-bot handling</strong><br><sub>Login, rate limits, and UI changes drain engineering time</sub></td>
-      <td>🎯 <strong>Lean on existing platform entry points</strong><br><sub>Reduce duplicated recovery work and focus on result orchestration</sub></td>
+      <td>🎯 <strong>Lean on existing platform entry points</strong><br><sub>Reduce repeated recovery work and focus on orchestration</sub></td>
     </tr>
     <tr>
-      <td>🔍 <strong>Endless keyword tuning</strong><br><sub>Finding usable coverage often means constant search tweaking</sub></td>
-      <td>🧠 <strong>Reuse provider-optimized search logic</strong><br><sub>Benefit from ranking, retrieval, and interaction patterns platforms already refined</sub></td>
+      <td>🔍 <strong>Endless keyword tuning</strong><br><sub>Usable coverage often needs constant search tweaking</sub></td>
+      <td>🧠 <strong>Reuse provider-optimized search logic</strong><br><sub>Reuse ranking, retrieval, and interaction patterns</sub></td>
     </tr>
     <tr>
       <td>🧱 <strong>Manual result stitching</strong><br><sub>You still need to unify scattered outputs afterward</sub></td>
-      <td>📦 <strong>Unified output for agents and workflows</strong><br><sub>Pull multi-platform results back into one reusable output channel</sub></td>
+      <td>📦 <strong>Unified output for agents and workflows</strong><br><sub>Pull results back into one reusable output channel</sub></td>
     </tr>
   </tbody>
 </table>
