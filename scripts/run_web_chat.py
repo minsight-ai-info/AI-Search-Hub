@@ -49,16 +49,19 @@ SITE_CONFIG = {
     "qwen": {
         "mode": "generic",
         "script": "scripts/generic_web_chat_playwright.py",
+        "url": "https://chat.qwen.ai/",
         "default_output": "out/qwen_answer.txt",
     },
     "gemini": {
         "mode": "generic",
         "script": "scripts/generic_web_chat_playwright.py",
+        "url": "https://gemini.google.com/app",
         "default_output": "out/gemini_answer.txt",
     },
     "grok": {
         "mode": "generic",
         "script": "scripts/generic_web_chat_playwright.py",
+        "url": "https://grok.com/",
         "default_output": "out/grok_answer.txt",
     },
 }

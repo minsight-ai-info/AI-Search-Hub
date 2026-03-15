@@ -476,6 +476,14 @@ def detect_page_status(page: Page, site_name: str) -> str:
     return derive_status(input_visible, login_selector_visible, interpretation)
 
 
+def suppress_login_required_during_response(status: str, current_text: str, running: bool, done_hint: bool, last_text: str) -> str:
+    if status != "login_required":
+        return status
+    if current_text or running or (done_hint and last_text):
+        return "ready"
+    return status
+
+
 def open_site_page(page: Page, site_name: str) -> Page:
     url = SITE_CONFIG[site_name]["url"]
     if url not in page.url:
@@ -547,7 +555,18 @@ def wait_for_answer(page: Page, site_name: str, baseline_texts: list[str], stabl
     stable_count = 0
 
     while time.time() - started < timeout:
-        status = detect_page_status(page, site_name)
+        current_texts = candidate_texts(page, config["assistant_selectors"], config["noise_substrings"])
+        current_text = latest_new_text(current_texts, baseline_texts)
+        running = any_visible(page, config["generation_running_selectors"])
+        done_hint = any_visible(page, config["generation_done_selectors"])
+        status = suppress_login_required_during_response(
+            detect_page_status(page, site_name),
+            current_text,
+            running,
+            done_hint,
+            last_text,
+        )
+
         if status == "login_required":
             return {"status": "login_required", "answer": ""}
         if status == "blocked":
@@ -556,11 +575,6 @@ def wait_for_answer(page: Page, site_name: str, baseline_texts: list[str], stabl
         if status == "error":
             body_text = visible_page_text(page, config["noise_substrings"])
             return {"status": "error", "answer": body_text}
-
-        current_texts = candidate_texts(page, config["assistant_selectors"], config["noise_substrings"])
-        current_text = latest_new_text(current_texts, baseline_texts)
-        running = any_visible(page, config["generation_running_selectors"])
-        done_hint = any_visible(page, config["generation_done_selectors"])
 
         if current_text:
             if current_text == last_text:
@@ -574,6 +588,9 @@ def wait_for_answer(page: Page, site_name: str, baseline_texts: list[str], stabl
 
         time.sleep(interval)
 
+    if last_text:
+        return {"status": "answer", "answer": last_text}
+
     status = detect_page_status(page, site_name)
     if status == "login_required":
         return {"status": "login_required", "answer": ""}
@@ -583,8 +600,6 @@ def wait_for_answer(page: Page, site_name: str, baseline_texts: list[str], stabl
     if status == "error":
         body_text = visible_page_text(page, config["noise_substrings"])
         return {"status": "error", "answer": body_text}
-    if last_text:
-        return {"status": "answer", "answer": last_text}
     return {"status": "no_reply", "answer": ""}
 
 
