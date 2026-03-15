@@ -46,6 +46,29 @@ Its job is simple:
 
 > **Aggregate the search capabilities major AI platforms have already optimized, and make them reusable for agents, workflows, and automation systems.**
 
+<table width="100%">
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/images/grok-result.png" alt="Grok run result" width="100%">
+      <br>
+      <sub>Real Grok run result</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/images/doubao-result.png" alt="Doubao run result" width="100%">
+      <br>
+      <sub>Real Doubao run result</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+## Install
+
+AI Search Hub is not a traditional SDK. It is a skill.
+
+Give this repository to any skill-capable agent or tool such as `OpenClaw`, `Claude Code`, `Codex`, or `Cursor`, and let it install or mount the skill directly.
+
 ---
 
 ## Traditional Workflow vs AI Search Hub
@@ -228,7 +251,9 @@ The point is:
 
 ---
 
-## Example Configuration
+## Advanced Usage
+
+### Example Configuration
 
 ```yaml
 # agents/openai.yaml
@@ -246,7 +271,7 @@ The runtime entrypoint is still `scripts/run_web_chat.py`.
 
 ---
 
-## Example Request
+### Example Request
 
 ```bash
 python3 scripts/run_web_chat.py \
@@ -260,7 +285,7 @@ python3 scripts/run_web_chat.py \
   --output out/grok_musk_recent.txt
 ```
 
-## Example Output
+### Example Output
 
 Doubao output excerpt:
 
@@ -281,23 +306,6 @@ Grok output excerpt:
 
 Overall, the recent pattern on X is mostly three buckets: xAI/Grok and X platform promotion, Starlink/SpaceX, and frequent political commentary.
 ```
-
-## Live Results
-
-<table width="100%">
-  <tr>
-    <td width="50%" align="center">
-      <img src="docs/images/doubao-result.png" alt="Doubao run result" width="100%">
-      <br>
-      <sub>Real Doubao run result</sub>
-    </td>
-    <td width="50%" align="center">
-      <img src="docs/images/grok-result.png" alt="Grok run result" width="100%">
-      <br>
-      <sub>Real Grok run result</sub>
-    </td>
-  </tr>
-</table>
 
 ---
 
