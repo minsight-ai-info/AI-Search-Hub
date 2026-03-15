@@ -24,7 +24,7 @@
 </p>
 
 **An open-source skill for aggregating platform-native AI search.**
-**Send one query, search multiple AI platforms in parallel.**
+**Bring tech updates, public sentiment, and daily planning into your OpenClaw with stronger search power.**
 
 </div>
 
