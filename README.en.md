@@ -48,36 +48,38 @@ Its job is simple:
 
 ---
 
-## A Lighter Search Stack
-
-Most "all-web search" systems eventually become the same heavy engineering story:
-
-- custom crawlers
-- browser automation
-- login and session handling
-- anti-bot recovery
-- provider-specific maintenance
-- endless keyword tuning
-- manual result cleanup
-
-AI Search Hub takes a different path:
-
-> **Reuse the platform-native search power already optimized by AI vendors.**
-
-Platforms already invested in search quality, ranking, access, and interaction design.
-AI Search Hub does not rebuild that stack. It orchestrates it.
-
----
-
 ## Traditional Workflow vs AI Search Hub
 
-| Traditional workflow | AI Search Hub |
-|---|---|
-| Build crawlers yourself | Reuse platform-native search |
-| One automation flow per provider | One query, multi-provider dispatch |
-| Constant anti-bot handling | Lean on existing platform entry points |
-| Endless keyword tuning | Reuse provider-optimized search logic |
-| Manual result stitching | Unified output for agents and workflows |
+<table>
+  <thead>
+    <tr>
+      <th align="left" width="42%">Traditional workflow</th>
+      <th align="left" width="58%">AI Search Hub</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>🔧 <strong>Build crawlers yourself</strong><br><sub>You own the scraping, parsing, and long-term maintenance burden</sub></td>
+      <td>⚡ <strong>Reuse platform-native search</strong><br><sub>Plug into search surfaces that major platforms already optimized</sub></td>
+    </tr>
+    <tr>
+      <td>🧩 <strong>One automation flow per provider</strong><br><sub>Every new source adds another integration to maintain</sub></td>
+      <td>🚀 <strong>One query, multi-provider dispatch</strong><br><sub>Use one entrypoint to orchestrate multiple search providers</sub></td>
+    </tr>
+    <tr>
+      <td>🛡️ <strong>Constant anti-bot handling</strong><br><sub>Login, rate limits, and UI changes drain engineering time</sub></td>
+      <td>🎯 <strong>Lean on existing platform entry points</strong><br><sub>Reduce duplicated recovery work and focus on result orchestration</sub></td>
+    </tr>
+    <tr>
+      <td>🔍 <strong>Endless keyword tuning</strong><br><sub>Finding usable coverage often means constant search tweaking</sub></td>
+      <td>🧠 <strong>Reuse provider-optimized search logic</strong><br><sub>Benefit from ranking, retrieval, and interaction patterns platforms already refined</sub></td>
+    </tr>
+    <tr>
+      <td>🧱 <strong>Manual result stitching</strong><br><sub>You still need to unify scattered outputs afterward</sub></td>
+      <td>📦 <strong>Unified output for agents and workflows</strong><br><sub>Pull multi-platform results back into one reusable output channel</sub></td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
