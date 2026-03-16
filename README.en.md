@@ -38,15 +38,16 @@ It is not just for one-query, all-search workflows. Give it a link and it can al
 
 It is not trying to make you maintain:
 
-- fragile crawler stacks
-- separate browser automation flows for every provider
+- fragile crawler stacks and brittle parsing rules
+- separate browser automation and login recovery flows for every provider
 - endless login, captcha, rate-limit, and anti-bot recovery
-- constant keyword and prompt tuning
-- manual cleanup of scattered results
+- direct work against fragmented entry points like WeChat, Douyin, Weibo, and the open web
+- link-by-link body extraction, ad removal, noise cleanup, key-point extraction, and structuring by hand
+- manual stitching of scattered results at the end
 
 Its job is simple:
 
-> **Turn multi-platform AI search, page-extraction ability, and the native data worlds behind major platforms into one entrypoint, so major AI platforms collect WeChat, Douyin, Weibo, and other hard-to-reach data for you, then clean and structure it.**
+> **Give it a question and let those platforms search for you. Give it a link and let them fetch, read, clean, and structure it for you. The hardest data entry points are exactly where you let major platforms do the work for your agent.**
 
 <table width="100%">
   <tr>
