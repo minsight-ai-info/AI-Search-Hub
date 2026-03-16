@@ -69,10 +69,22 @@ BUTTON_TEXT_EXCLUSIONS = {
     "帮我写作",
     "翻译",
     "编程",
+    "AI 播客",
     "深入研究",
     "更多",
     "快速",
     "新对话",
+}
+
+GUIDE_TEXT_EXCLUSIONS = {
+    "你可以做些什么？",
+    "你能提供哪些帮助？",
+    "你有什么功能？",
+}
+
+COMPACT_EXCLUSIONS = {
+    *(item.replace(" ", "") for item in BUTTON_TEXT_EXCLUSIONS),
+    *(item.replace(" ", "") for item in GUIDE_TEXT_EXCLUSIONS),
 }
 
 STARTUP_PAGE_PREFIXES = (
@@ -195,7 +207,34 @@ def normalize_text(text: str) -> str:
     return "\n".join(lines).strip()
 
 
-def candidate_texts(page: Page) -> list[str]:
+def clean_answer_text(text: str, question: str) -> str:
+    normalized = normalize_text(text)
+    if not normalized:
+        return ""
+
+    lines = [line.strip() for line in normalized.splitlines() if line.strip()]
+    normalized_question = normalize_text(question)
+    if normalized_question and normalized_question in lines:
+        last_prompt_index = max(index for index, line in enumerate(lines) if line == normalized_question)
+        lines = lines[last_prompt_index + 1 :]
+
+    cleaned_lines: list[str] = []
+    for line in lines:
+        compact_line = line.replace(" ", "")
+        if (
+            line in BUTTON_TEXT_EXCLUSIONS
+            or line in GUIDE_TEXT_EXCLUSIONS
+            or compact_line in COMPACT_EXCLUSIONS
+        ):
+            continue
+        if line.startswith("下载豆包"):
+            continue
+        cleaned_lines.append(line)
+
+    return "\n".join(cleaned_lines).strip()
+
+
+def candidate_texts(page: Page, question: str) -> list[str]:
     texts: list[str] = []
 
     for selector in ASSISTANT_SELECTORS:
@@ -207,8 +246,8 @@ def candidate_texts(page: Page) -> list[str]:
                 try:
                     if not item.is_visible():
                         continue
-                    text = normalize_text(item.inner_text(timeout=1000))
-                    if len(text) >= 10:
+                    text = clean_answer_text(item.inner_text(timeout=1000), question)
+                    if text:
                         texts.append(text)
                 except Exception:
                     continue
@@ -217,7 +256,7 @@ def candidate_texts(page: Page) -> list[str]:
 
     if not texts:
         try:
-            body_text = normalize_text(page.locator("body").inner_text(timeout=2000))
+            body_text = clean_answer_text(page.locator("body").inner_text(timeout=2000), question)
             if body_text:
                 texts.append(body_text)
         except Exception:
@@ -263,6 +302,7 @@ def latest_new_text(current: list[str], baseline: list[str]) -> str:
 def wait_answer_finished(
     page: Page,
     baseline_texts: list[str],
+    question: str,
     stable_rounds: int,
     interval: float,
     timeout: int,
@@ -272,7 +312,7 @@ def wait_answer_finished(
     stable_count = 0
 
     while time.time() - started < timeout:
-        current_texts = candidate_texts(page)
+        current_texts = candidate_texts(page, question)
         current_text = latest_new_text(current_texts, baseline_texts)
         running = any_visible(page, GENERATION_RUNNING_SELECTORS)
         done_hint = any_visible(page, GENERATION_DONE_SELECTORS)
@@ -461,13 +501,14 @@ def ask_doubao(
             try_new_chat(page)
 
         input_box = first_visible(page, INPUT_SELECTORS, timeout_ms=15000)
-        baseline_texts = candidate_texts(page)
+        baseline_texts = candidate_texts(page, question)
         fill_question(page, input_box, question)
         try_send(page, input_box)
 
         answer = wait_answer_finished(
             page=page,
             baseline_texts=baseline_texts,
+            question=question,
             stable_rounds=stable_rounds,
             interval=interval,
             timeout=timeout,

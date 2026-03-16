@@ -90,6 +90,18 @@ COMMON_NOISE_SUBSTRINGS = [
     "AI 生成",
 ]
 
+SITE_LINE_EXCLUSIONS = {
+    "qwen": {
+        "已经完成思考",
+        "快速",
+        "正在读取来源…",
+        "正在读取来源...",
+        "正在搜索网络",
+        "跳过",
+        "人工智能生成的内容可能不准确。",
+    },
+}
+
 STARTUP_PAGE_PREFIXES = (
     "",
     "about:blank",
@@ -114,7 +126,7 @@ SITE_CONFIG = {
         "login_selectors": ['text="登录"', 'text="Sign in"', 'text="Continue with Google"', 'text="注册"'],
         "login_phrases": COMMON_LOGIN_PHRASES,
         "blocked_phrases": COMMON_BLOCKED_PHRASES,
-        "login_overrides_ready": True,
+        "attempt_send_before_login": True,
         "noise_substrings": COMMON_NOISE_SUBSTRINGS + ["内容由通义生成"],
     },
     "gemini": {
@@ -340,6 +352,23 @@ def visible_page_text(page: Page, noise_substrings: Iterable[str]) -> str:
         return normalize_text(page.locator("body").inner_text(timeout=2000), noise_substrings)
     except Exception:
         return ""
+
+
+def clean_answer_text(site_name: str, text: str, question: str) -> str:
+    config = SITE_CONFIG[site_name]
+    normalized = normalize_text(text, config["noise_substrings"])
+    if not normalized:
+        return ""
+
+    lines = [line.strip() for line in normalized.splitlines() if line.strip()]
+    normalized_question = normalize_text(question, config["noise_substrings"])
+    if normalized_question and normalized_question in lines:
+        last_prompt_index = max(index for index, line in enumerate(lines) if line == normalized_question)
+        lines = lines[last_prompt_index + 1 :]
+
+    exclusions = SITE_LINE_EXCLUSIONS.get(site_name, set())
+    lines = [line for line in lines if line not in exclusions]
+    return "\n".join(lines).strip()
 
 
 def select_all_shortcut() -> str:
@@ -571,7 +600,15 @@ def ensure_input_box(page: Page, site_name: str, login_timeout: int) -> tuple[Pa
             raise exc
 
 
-def wait_for_answer(page: Page, site_name: str, baseline_texts: list[str], stable_rounds: int, interval: float, timeout: int) -> dict:
+def wait_for_answer(
+    page: Page,
+    site_name: str,
+    baseline_texts: list[str],
+    question: str,
+    stable_rounds: int,
+    interval: float,
+    timeout: int,
+) -> dict:
     config = SITE_CONFIG[site_name]
     started = time.time()
     last_text = ""
@@ -579,7 +616,7 @@ def wait_for_answer(page: Page, site_name: str, baseline_texts: list[str], stabl
 
     while time.time() - started < timeout:
         current_texts = candidate_texts(page, config["assistant_selectors"], config["noise_substrings"])
-        current_text = latest_new_text(current_texts, baseline_texts)
+        current_text = clean_answer_text(site_name, latest_new_text(current_texts, baseline_texts), question)
         running = any_visible(page, config["generation_running_selectors"])
         done_hint = any_visible(page, config["generation_done_selectors"])
         status = suppress_login_required_during_response(
@@ -612,7 +649,7 @@ def wait_for_answer(page: Page, site_name: str, baseline_texts: list[str], stabl
         time.sleep(interval)
 
     if last_text:
-        return {"status": "answer", "answer": last_text}
+        return {"status": "answer", "answer": clean_answer_text(site_name, last_text, question)}
 
     status = detect_page_status(page, site_name)
     if status == "login_required":
@@ -661,7 +698,7 @@ def ask_site(
             fill_question_for_site(site_name, page, input_box, question)
             try_send(page, input_box, config["send_selectors"])
 
-            result = wait_for_answer(page, site_name, baseline_texts, stable_rounds, interval, timeout)
+            result = wait_for_answer(page, site_name, baseline_texts, question, stable_rounds, interval, timeout)
             if result["status"] == "answer":
                 return result["answer"]
 
@@ -676,7 +713,7 @@ def ask_site(
                 fill_question_for_site(site_name, page, input_box, question)
                 try_send(page, input_box, config["send_selectors"])
 
-                retry_result = wait_for_answer(page, site_name, baseline_texts, stable_rounds, interval, timeout)
+                retry_result = wait_for_answer(page, site_name, baseline_texts, question, stable_rounds, interval, timeout)
                 if retry_result["status"] == "answer":
                     return retry_result["answer"]
                 if retry_result["status"] == "blocked":

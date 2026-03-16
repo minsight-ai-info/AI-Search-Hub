@@ -126,7 +126,7 @@ AI Search Hub 不是传统 SDK，而是一个 Skill。
       <td><strong>Gemini</strong><br><sub>Google-first discovery</sub></td>
       <td><code>Google 搜索</code> <code>网页发现</code> <code>知识内容</code></td>
       <td><code>Google</code> <code>公开网页</code> <code>知识站点</code></td>
-      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
+      <td><img src="https://img.shields.io/badge/Experimental-f59e0b?style=flat-square" alt="Experimental"></td>
     </tr>
     <tr>
       <td><strong>Grok</strong><br><sub>Real-time social search</sub></td>
@@ -147,16 +147,16 @@ AI Search Hub 不是传统 SDK，而是一个 Skill。
       <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
     </tr>
     <tr>
-      <td><strong>文心一言</strong><br><sub>Chinese web expansion</sub></td>
-      <td><code>中文搜索</code> <code>公开网页</code> <code>百度生态</code></td>
-      <td><code>中文网页</code> <code>搜索结果</code> <code>公开站点</code></td>
-      <td><img src="https://img.shields.io/badge/Extended-2563eb?style=flat-square" alt="Extended"></td>
+      <td><strong>LongCat</strong><br><sub>Chinese knowledge blend</sub></td>
+      <td><code>中文知识</code> <code>行业信息</code> <code>结构化总结</code></td>
+      <td><code>中文知识库</code> <code>行业报告</code> <code>公开信息</code></td>
+      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
     </tr>
     <tr>
       <td><strong>通义千问</strong><br><sub>Chinese web expansion</sub></td>
       <td><code>中文搜索</code> <code>网页问答</code> <code>公开内容</code></td>
       <td><code>中文网页</code> <code>搜索入口</code> <code>公开信息</code></td>
-      <td><img src="https://img.shields.io/badge/Extended-2563eb?style=flat-square" alt="Extended"></td>
+      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
     </tr>
     <tr>
       <td><strong>More</strong><br><sub>Extensible surface</sub></td>
@@ -181,9 +181,9 @@ AI Search Hub 不是传统 SDK，而是一个 Skill。
 
 ### 3. 复用平台原生能力
 
-Gemini 擅长 Google / 网页搜索。
+Gemini 擅长 Google / 网页搜索，但当前仍属于实验接入。
 Grok 擅长 X / Twitter 实时搜索。
-豆包、元宝、通义千问、文心一言更适合不同层次的中文互联网内容。
+豆包偏抖音与中文热点，元宝偏微信生态补充，通义千问偏公开网页，LongCat 偏中文知识与行业信息。
 
 ### 4. 收集并整理结果
 

@@ -126,7 +126,7 @@ These platforms are not side notes. They are the search surfaces AI Search Hub o
       <td><strong>Gemini</strong><br><sub>Google-first discovery</sub></td>
       <td><code>Google search</code> <code>web discovery</code> <code>knowledge lookup</code></td>
       <td><code>Google</code> <code>public web</code> <code>knowledge sites</code></td>
-      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
+      <td><img src="https://img.shields.io/badge/Experimental-f59e0b?style=flat-square" alt="Experimental"></td>
     </tr>
     <tr>
       <td><strong>Grok</strong><br><sub>Real-time social search</sub></td>
@@ -147,16 +147,16 @@ These platforms are not side notes. They are the search surfaces AI Search Hub o
       <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
     </tr>
     <tr>
-      <td><strong>Wenxin Yiyan</strong><br><sub>Chinese web expansion</sub></td>
-      <td><code>Chinese search</code> <code>public web</code> <code>Baidu ecosystem</code></td>
-      <td><code>Chinese pages</code> <code>search results</code> <code>public sites</code></td>
-      <td><img src="https://img.shields.io/badge/Extended-2563eb?style=flat-square" alt="Extended"></td>
+      <td><strong>LongCat</strong><br><sub>Chinese knowledge blend</sub></td>
+      <td><code>Chinese knowledge</code> <code>industry context</code> <code>structured summaries</code></td>
+      <td><code>Chinese knowledge bases</code> <code>industry reports</code> <code>public information</code></td>
+      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
     </tr>
     <tr>
       <td><strong>Qwen / Tongyi</strong><br><sub>Chinese web expansion</sub></td>
       <td><code>Chinese search</code> <code>web Q&amp;A</code> <code>public content</code></td>
       <td><code>Chinese web</code> <code>search surfaces</code> <code>open information</code></td>
-      <td><img src="https://img.shields.io/badge/Extended-2563eb?style=flat-square" alt="Extended"></td>
+      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
     </tr>
     <tr>
       <td><strong>More</strong><br><sub>Extensible surface</sub></td>
@@ -181,9 +181,9 @@ The same query is sent to multiple providers so each one can search the ecosyste
 
 ### 3. Reuse platform-native strengths
 
-Gemini is strong at Google and web search.
+Gemini is strong at Google and web search, but is still an experimental integration here.
 Grok is strong at X / Twitter and real-time discovery.
-Doubao, Yuanbao, Qwen, and Wenxin are better aligned with different layers of the Chinese internet.
+Doubao leans into Douyin and Chinese trends, Yuanbao leans into WeChat-adjacent supplementation, Qwen leans into the public web, and LongCat leans into Chinese knowledge and industry context.
 
 ### 4. Collect and normalize results
 

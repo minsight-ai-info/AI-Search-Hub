@@ -58,6 +58,8 @@ GENERATION_DONE_SELECTORS = [
 NOISE_SUBSTRINGS = [
     "内容由AI生成",
     "内容由 AI 生成",
+    "登录后为您保存历史对话",
+    "请先登录",
 ]
 
 STARTUP_PAGE_PREFIXES = (
@@ -206,7 +208,7 @@ def candidate_texts(page: Page) -> list[str]:
                     if not item.is_visible():
                         continue
                     text = normalize_text(item.inner_text(timeout=1000))
-                    if len(text) >= 10:
+                    if len(text) >= 2:
                         texts.append(text)
                 except Exception:
                     continue

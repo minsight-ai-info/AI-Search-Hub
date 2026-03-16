@@ -26,7 +26,6 @@ SITE_CONFIG = {
         "url": "https://yuanbao.tencent.com/chat",
         "ready_selectors": ["textarea", 'div[role="textbox"]', '[contenteditable="true"]'],
         "login_selectors": ['text="登录"', 'text="微信扫码登录"', 'text="上次登录"', ".t-dialog__position"],
-        "ignore_login_when_ready": True,
         "default_output": "out/yuanbao_answer.txt",
     },
     "longcat": {
