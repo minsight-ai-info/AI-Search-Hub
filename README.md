@@ -112,6 +112,8 @@ AI Search Hub 不是传统 SDK，而是一个 Skill。
 
 这些平台不是附属补充，而是 AI Search Hub 当前编排的核心搜索入口。
 
+**当前已接入：`Gemini` / `Grok` / `豆包` / `元宝` / `LongCat` / `通义千问`**
+
 <table width="100%">
   <thead>
     <tr>

@@ -112,6 +112,8 @@ Give this repository to any skill-capable agent or tool such as `OpenClaw`, `Cla
 
 These platforms are not side notes. They are the search surfaces AI Search Hub orchestrates first.
 
+**Currently integrated: `Gemini` / `Grok` / `Doubao` / `Yuanbao` / `LongCat` / `Qwen`**
+
 <table width="100%">
   <thead>
     <tr>
