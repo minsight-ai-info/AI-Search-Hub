@@ -118,7 +118,7 @@ These platforms are not side notes. They are the search surfaces AI Search Hub o
       <th align="left" width="24%">Provider</th>
       <th align="left" width="30%">Search Strength</th>
       <th align="left" width="30%">Typical Coverage</th>
-      <th align="left" width="16%">Role</th>
+      <th align="left" width="16%">Status</th>
     </tr>
   </thead>
   <tbody>
@@ -126,37 +126,37 @@ These platforms are not side notes. They are the search surfaces AI Search Hub o
       <td><strong>Gemini</strong><br><sub>Google-first discovery</sub></td>
       <td><code>Google search</code> <code>web discovery</code> <code>knowledge lookup</code></td>
       <td><code>Google</code> <code>public web</code> <code>knowledge sites</code></td>
-      <td><img src="https://img.shields.io/badge/Experimental-f59e0b?style=flat-square" alt="Experimental"></td>
+      <td><img src="https://img.shields.io/badge/Good-16a34a?style=flat-square" alt="Good"></td>
     </tr>
     <tr>
       <td><strong>Grok</strong><br><sub>Real-time social search</sub></td>
       <td><code>X / Twitter</code> <code>live signals</code> <code>trend discovery</code></td>
       <td><code>real-time posts</code> <code>social chatter</code> <code>trending topics</code></td>
-      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
+      <td><img src="https://img.shields.io/badge/Good-16a34a?style=flat-square" alt="Good"></td>
     </tr>
     <tr>
       <td><strong>Doubao</strong><br><sub>Chinese trend sensing</sub></td>
       <td><code>Chinese understanding</code> <code>hot topics</code> <code>content summarization</code></td>
       <td><code>Douyin</code> <code>Chinese content</code> <code>trending discussions</code></td>
-      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
+      <td><img src="https://img.shields.io/badge/Good-16a34a?style=flat-square" alt="Good"></td>
     </tr>
     <tr>
       <td><strong>Yuanbao</strong><br><sub>Chinese source supplement</sub></td>
       <td><code>Chinese supplement</code> <code>official account lookup</code> <code>source cross-checking</code></td>
       <td><code>WeChat Official Accounts</code> <code>Chinese web</code> <code>public content</code></td>
-      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
+      <td><img src="https://img.shields.io/badge/Good-16a34a?style=flat-square" alt="Good"></td>
     </tr>
     <tr>
       <td><strong>LongCat</strong><br><sub>Chinese knowledge blend</sub></td>
       <td><code>Chinese knowledge</code> <code>industry context</code> <code>structured summaries</code></td>
       <td><code>Chinese knowledge bases</code> <code>industry reports</code> <code>public information</code></td>
-      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
+      <td><img src="https://img.shields.io/badge/Good-16a34a?style=flat-square" alt="Good"></td>
     </tr>
     <tr>
       <td><strong>Qwen / Tongyi</strong><br><sub>Chinese web expansion</sub></td>
       <td><code>Chinese search</code> <code>web Q&amp;A</code> <code>public content</code></td>
       <td><code>Chinese web</code> <code>search surfaces</code> <code>open information</code></td>
-      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
+      <td><img src="https://img.shields.io/badge/Good-16a34a?style=flat-square" alt="Good"></td>
     </tr>
     <tr>
       <td><strong>More</strong><br><sub>Extensible surface</sub></td>

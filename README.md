@@ -118,7 +118,7 @@ AI Search Hub 不是传统 SDK，而是一个 Skill。
       <th align="left" width="24%">Provider</th>
       <th align="left" width="30%">擅长方向</th>
       <th align="left" width="30%">典型覆盖</th>
-      <th align="left" width="16%">当前角色</th>
+      <th align="left" width="16%">当前状态</th>
     </tr>
   </thead>
   <tbody>
@@ -126,37 +126,37 @@ AI Search Hub 不是传统 SDK，而是一个 Skill。
       <td><strong>Gemini</strong><br><sub>Google-first discovery</sub></td>
       <td><code>Google 搜索</code> <code>网页发现</code> <code>知识内容</code></td>
       <td><code>Google</code> <code>公开网页</code> <code>知识站点</code></td>
-      <td><img src="https://img.shields.io/badge/Experimental-f59e0b?style=flat-square" alt="Experimental"></td>
+      <td><img src="https://img.shields.io/badge/Good-16a34a?style=flat-square" alt="Good"></td>
     </tr>
     <tr>
       <td><strong>Grok</strong><br><sub>Real-time social search</sub></td>
       <td><code>X / Twitter</code> <code>实时动态</code> <code>热点讨论</code></td>
       <td><code>实时舆情</code> <code>趋势话题</code> <code>社交信号</code></td>
-      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
+      <td><img src="https://img.shields.io/badge/Good-16a34a?style=flat-square" alt="Good"></td>
     </tr>
     <tr>
       <td><strong>豆包</strong><br><sub>Chinese trend sensing</sub></td>
       <td><code>中文理解</code> <code>热点话题</code> <code>内容归纳</code></td>
       <td><code>抖音</code> <code>中文内容生态</code> <code>热门内容</code></td>
-      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
+      <td><img src="https://img.shields.io/badge/Good-16a34a?style=flat-square" alt="Good"></td>
     </tr>
     <tr>
       <td><strong>元宝</strong><br><sub>Chinese source supplement</sub></td>
       <td><code>中文补充检索</code> <code>公众号信源</code> <code>内容交叉验证</code></td>
       <td><code>微信公众号</code> <code>中文网页</code> <code>公开内容</code></td>
-      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
+      <td><img src="https://img.shields.io/badge/Good-16a34a?style=flat-square" alt="Good"></td>
     </tr>
     <tr>
       <td><strong>LongCat</strong><br><sub>Chinese knowledge blend</sub></td>
       <td><code>中文知识</code> <code>行业信息</code> <code>结构化总结</code></td>
       <td><code>中文知识库</code> <code>行业报告</code> <code>公开信息</code></td>
-      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
+      <td><img src="https://img.shields.io/badge/Good-16a34a?style=flat-square" alt="Good"></td>
     </tr>
     <tr>
       <td><strong>通义千问</strong><br><sub>Chinese web expansion</sub></td>
       <td><code>中文搜索</code> <code>网页问答</code> <code>公开内容</code></td>
       <td><code>中文网页</code> <code>搜索入口</code> <code>公开信息</code></td>
-      <td><img src="https://img.shields.io/badge/Core-16a34a?style=flat-square" alt="Core"></td>
+      <td><img src="https://img.shields.io/badge/Good-16a34a?style=flat-square" alt="Good"></td>
     </tr>
     <tr>
       <td><strong>More</strong><br><sub>Extensible surface</sub></td>
