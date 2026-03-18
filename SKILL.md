@@ -25,6 +25,31 @@ Use this skill when the user asks to:
 - prompt for login if the target site is not logged in, then continue automatically
 - seed an isolated debug profile from the user's local browser data
 
+## Installation
+
+Before first use, ensure dependencies are installed. See `INSTALL.md` for the complete setup sequence:
+
+1. Python 3.10+ with pip
+2. `pip install playwright`
+3. `playwright install chromium`
+
+The wrapper auto-detects Chrome/Edge/Brave/Chromium on macOS, Linux, and Windows.
+
+## Routing Strategy
+
+Do not send every question to every platform. Analyze the question first, then route to the platform(s) whose underlying data world is most likely to contain the best answer.
+
+See `ROUTING.md` for the full decision framework. Quick reference:
+
+| Question Type | Recommended Site | Parent Company |
+|---|---|---|
+| Twitter / X / real-time social | `grok` | xAI |
+| Google / global web | `gemini` | Google |
+| 微信公众号 / WeChat content | `yuanbao` | 腾讯 |
+| 抖音 / 头条 / ByteDance trends | `doubao` | 字节跳动 |
+| 美团 / 大众点评 / 本地生活 | `longcat` | 美团 |
+| 淘宝 / 阿里 / 通用中文 | `qwen` | 阿里巴巴 |
+
 ## How To Run
 
 Run the bundled wrapper script instead of calling the site script directly:
