@@ -110,6 +110,18 @@ SITE_LINE_EXCLUSIONS = {
         "当前进程",
         "文件",
     },
+    "kimi": {
+        "Agent",
+        "K2.5 Instant",
+        "K2 Instant",
+        "K1.5",
+        "Kimi Claw Is Ready!",
+        "One-click OpenClaw, Kimi works 24/7",
+        "Credit System Upgrade Coming",
+        "Later",
+        "Learn More",
+        "New Chat",
+    },
 }
 
 SITE_LINE_PREFIX_EXCLUSIONS = {
@@ -200,6 +212,60 @@ SITE_CONFIG = {
         "error_phrases": COMMON_ERROR_PHRASES,
         "attempt_send_before_login": True,
         "noise_substrings": COMMON_NOISE_SUBSTRINGS + ["\u5185\u5bb9\u7531 MiniMax \u751f\u6210", "\u5185\u5bb9\u7531AI\u751f\u6210\uff0c\u91cd\u8981\u4fe1\u606f\u8bf7\u52a1\u5fc5\u6838\u67e5"],
+    },
+    "kimi": {
+        "url": "https://kimi.moonshot.cn/",
+        # Intentionally excludes generic "textarea" and div[role="textbox"] to avoid
+        # matching the phone-number <input> on Kimi's login page, which would
+        # incorrectly signal that the chat interface is ready.
+        "input_selectors": [
+            'div[contenteditable="true"][data-lexical-editor="true"]',
+            '.input-area div[contenteditable="true"]',
+            'div[contenteditable="true"]',
+        ],
+        "send_selectors": COMMON_SEND_SELECTORS + [
+            'button[aria-label*="发送"]',
+            'button[data-testid*="send"]',
+            'button[type="submit"]',
+        ],
+        "assistant_selectors": COMMON_ASSISTANT_SELECTORS + [
+            '[class*="segment_"]',
+            '[class*="chat-item--assistant"]',
+            '.markdown-body',
+            '[class*="chat-item"]',
+        ],
+        "generation_running_selectors": COMMON_GENERATION_RUNNING_SELECTORS + [
+            'button:has-text("停止响应")',
+            'button[aria-label*="停止"]',
+            'button[aria-label*="stop"]',
+            'button[aria-label*="Stop"]',
+            '[class*="stop"]',
+            '[class*="abort"]',
+        ],
+        "generation_done_selectors": COMMON_GENERATION_DONE_SELECTORS + [
+            'button:has-text("重新回答")',
+            'button:has-text("重试")',
+            'button:has-text("Retry")',
+        ],
+        "login_selectors": [
+            'text="登录"',
+            'text="立即登录"',
+            'text="手机号登录"',
+            'text="Log in"',
+        ],
+        "login_phrases": COMMON_LOGIN_PHRASES + ["立即登录", "手机号登录"],
+        "blocked_phrases": COMMON_BLOCKED_PHRASES,
+        "error_phrases": COMMON_ERROR_PHRASES,
+        "noise_substrings": COMMON_NOISE_SUBSTRINGS + [
+            "内容由 Kimi 生成",
+            "由 Kimi 生成",
+            "Kimi Claw Is Ready!",
+            "One-click OpenClaw",
+            "Credit System Upgrade",
+            "credit balance",
+            "K2.5 Instant",
+            "K2 Instant",
+        ],
     },
 }
 
@@ -484,6 +550,47 @@ def fill_question_for_site(site_name: str, page: Page, input_box: Locator, quest
         except Exception:
             pass
 
+    if site_name == "kimi":
+        # Kimi uses a Lexical rich-text editor whose internal React state is only
+        # updated by real keyboard events.  input_box.fill() writes text visually
+        # but leaves the editor state stale, keeping the send button disabled.
+        input_box.click()
+        page.wait_for_timeout(300)
+        page.keyboard.press(select_all_shortcut())
+        page.keyboard.press("Backspace")
+        page.keyboard.type(question, delay=15)
+        page.wait_for_timeout(500)
+
+        # Try Enter first (works when input has focus and no modal intercepts).
+        input_box.press("Enter")
+        page.wait_for_timeout(400)
+
+        # If Enter did not submit (e.g. Lexical config treats Enter as newline),
+        # fall back to locating the send button via JavaScript: traverse up from the
+        # contenteditable and click the first enabled button containing an SVG icon.
+        sent = page.evaluate("""() => {
+            const input = document.querySelector('div[contenteditable="true"]');
+            if (!input) return false;
+            let el = input;
+            for (let i = 0; i < 8; i++) {
+                el = el.parentElement;
+                if (!el) break;
+                const btns = Array.from(el.querySelectorAll('button'))
+                    .filter(b => !b.disabled && b.offsetParent !== null && b.querySelector('svg'));
+                if (btns.length > 0) {
+                    btns[btns.length - 1].click();
+                    return true;
+                }
+            }
+            return false;
+        }""")
+        if sent:
+            return
+        # Last resort: Enter via page keyboard
+        input_box.click()
+        page.keyboard.press("Enter")
+        return
+
     fill_question(page, input_box, question)
 
 
@@ -613,9 +720,13 @@ def should_wait_until_ready(site_name: str) -> bool:
 def wait_until_ready(page: Page, site_name: str, login_timeout: int) -> Page:
     started = time.time()
     login_notified = False
+    login_detected = False
 
     while time.time() - started < login_timeout:
-        page = open_site_page(page, site_name)
+        # Once login is detected, stop navigating so the user's login flow is
+        # not interrupted by repeated page.goto() calls.
+        if not login_detected:
+            page = open_site_page(page, site_name)
         status = detect_page_status(page, site_name)
 
         if status == "ready":
@@ -625,12 +736,14 @@ def wait_until_ready(page: Page, site_name: str, login_timeout: int) -> Page:
             body_text = visible_page_text(page, SITE_CONFIG[site_name]["noise_substrings"])
             raise RuntimeError(f"[{site_name}] page is blocked or unsupported: {body_text[:200]}")
 
-        if status == "login_required" and not login_notified:
-            print(
-                f"[{site_name}] login required. Complete login in the opened browser window; execution will continue automatically.",
-                flush=True,
-            )
-            login_notified = True
+        if status == "login_required":
+            login_detected = True
+            if not login_notified:
+                print(
+                    f"[{site_name}] login required. Complete login in the opened browser window; execution will continue automatically.",
+                    flush=True,
+                )
+                login_notified = True
 
         try:
             page.wait_for_timeout(2000)

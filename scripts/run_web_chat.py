@@ -69,6 +69,12 @@ SITE_CONFIG = {
         "url": "https://agent.minimaxi.com/",
         "default_output": "out/minimaxi_answer.txt",
     },
+    "kimi": {
+        "mode": "generic",
+        "script": "scripts/kimi_playwright.py",
+        "url": "https://kimi.moonshot.cn/",
+        "default_output": "out/kimi_answer.txt",
+    },
 }
 
 IGNORE_DIRS = {

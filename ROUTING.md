@@ -42,6 +42,7 @@ Identify which content ecosystem is most likely to have the answer:
 | Mentions 美团, 大众点评, 外卖, 本地生活, 餐饮, 酒店, 旅游攻略, or the question is about local services, lifestyle, food, travel, merchant reviews | Meituan / Dianping ecosystem | 美团 Meituan | `longcat` |
 | Mentions 淘宝, 天猫, 阿里巴巴, 1688, 钉钉, or the question is about e-commerce, B2B, enterprise services, cloud computing | Alibaba ecosystem | 阿里巴巴 Alibaba | `qwen` |
 | Explicitly asks for MiniMax / MiniMax Agent / 海螺 / MiniMax 平台 | MiniMax ecosystem | MiniMax | `minimaxi` |
+| Explicitly asks for Kimi / moonshot / 月之暗面, or the question requires long-context reading, document analysis, research report summarization | Moonshot AI ecosystem | 月之暗面 Moonshot AI | `kimi` |
 | Mentions 微博, Weibo hot search, Chinese celebrity news, Chinese public opinion | Weibo / Sina ecosystem | 新浪 Sina | `doubao` or `longcat` |
 | **Domestic — By Content Type** |
 | Chinese lifestyle, local services, food recommendations, travel guides, merchant information | Meituan knowledge base | 美团 Meituan | `longcat` |
@@ -134,6 +135,8 @@ Is the question about international / English content?
     │   └── YES → doubao (字节系，含头条) or longcat (综合)
     ├── Does it need structured knowledge, industry reports, or professional Chinese content?
     │   └── YES → longcat (美团知识库)
+    ├── Does the question explicitly mention Kimi / moonshot / 月之暗面, or require long-context analysis, document reading?
+    │   └── YES → kimi (月之暗面)
     └── General Chinese web question, no specific ecosystem?
         └── qwen (阿里系，通用搜索)
 ```
@@ -217,6 +220,7 @@ If the user's question is time-sensitive or they are waiting, prefer running few
 | 美团 / 大众点评 / 本地生活 | `longcat` | `doubao` | 美团 |
 | 淘宝 / 天猫 / 阿里系内容 | `qwen` | `longcat` | 阿里巴巴 |
 | 明确要求 MiniMax 平台 | `minimaxi` | `qwen` | MiniMax |
+| 明确要求 Kimi / 长文档分析 / 研究报告总结 | `kimi` | `longcat` | 月之暗面 |
 | 微博 / 新浪系内容 | `doubao` | `longcat` | 新浪 |
 | **Domestic — By Content Type** |
 | 本地生活服务 / 餐饮 / 酒店 / 旅游 | `longcat` | `doubao` | 美团 |
