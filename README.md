@@ -420,3 +420,17 @@ MiniMax 输出片段：
 
 有想法、反馈或想接入新的平台，欢迎提 [Issue](https://github.com/minsight-ai-info/AI-Search-Hub/issues) 或直接发 [PR](https://github.com/minsight-ai-info/AI-Search-Hub/pulls)。
 感谢Linux.do社区推动:https://linux.do/
+
+
+## Installation
+
+```bash
+# Installation instructions
+```
+
+
+## Usage
+
+```python
+# Usage examples
+```
