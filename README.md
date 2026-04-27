@@ -22,7 +22,10 @@
   <img src="https://img.shields.io/badge/🌐_Multi--Language-blue?style=flat-square" alt="Multi-Language">
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT License">
 </p>
-欢迎大家试用我们的商业调研产品 **输入一个想法，NotYet 帮你从社交平台用户反馈里判断：有没有需求、痛点在哪、用户为什么买。**  https://www.notyet.chat/
+欢迎大家试用我们的商业调研产品 https://www.notyet.chat/
+
+**输入一个想法，NotYet 帮你从社交平台用户反馈里判断：有没有需求、痛点在哪、用户为什么买。**
+
 **一个聚合多平台 AI 原生搜索能力的开源 Skill。**
 **免费获取微信公众号、抖音、微博、B站等数据，通过大厂 AI 平台帮你搜集、清洗、整理，为你的 OpenClaw 装上更强的搜索、抽取与数据借力能力。**
 
