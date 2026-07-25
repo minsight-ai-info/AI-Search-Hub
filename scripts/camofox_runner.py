@@ -132,6 +132,34 @@ def type_text(ref: str, text: str, tab_id: Optional[str] = None, cwd: Optional[P
     run(cmd, cwd=cwd)
 
 
+def type_text_selector(selector: str, text: str, tab_id: Optional[str] = None, cwd: Optional[Path] = None) -> None:
+    """Replace text in a CSS-selected native input or contenteditable editor."""
+    expression = (
+        "(() => {"
+        f"const el = document.querySelector({json.dumps(selector)});"
+        f"const text = {json.dumps(text)};"
+        "if (!el) return 'not-found';"
+        "el.focus();"
+        "if (el.isContentEditable) {"
+        "el.innerHTML = ''; el.textContent = text;"
+        "el.dispatchEvent(new InputEvent('input', {bubbles: true, inputType: 'insertText', data: text}));"
+        "return 'set-contenteditable';"
+        "}"
+        "el.value = text;"
+        "el.dispatchEvent(new Event('input', {bubbles: true}));"
+        "el.dispatchEvent(new Event('change', {bubbles: true}));"
+        "return 'set-input';"
+        "})()"
+    )
+    cmd = ["camofox-browser", "eval", expression]
+    if tab_id:
+        cmd.append(tab_id)
+    result = run(cmd, cwd=cwd)
+    value = result.get("result") if isinstance(result, dict) else ""
+    if value in {"not-found", ""}:
+        raise RuntimeError(f"Could not set text: selector not found: {selector}")
+
+
 def _clear_focused_via_js(tab_id: Optional[str] = None, cwd: Optional[Path] = None) -> str:
     """Best-effort clear of the currently focused input/textarea."""
     expression = (

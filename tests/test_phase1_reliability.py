@@ -172,6 +172,32 @@ class KimiResponseTests(unittest.TestCase):
         self.assertEqual(result["result"], "first line\nsecond line")
 
 
+class NewDomesticPlatformTests(unittest.TestCase):
+    def test_minimax_uses_editor_selector_and_assistant_message(self):
+        config = chat.SITE_CONFIG["minimaxi"]
+        self.assertEqual(config["input_selector"], "[data-testid=message-textarea]")
+        self.assertIn("assistant-segment", config["custom_answer_js"])
+
+    def test_longcat_uses_assistant_markdown_container(self):
+        script = chat.SITE_CONFIG["longcat"]["custom_answer_js"]
+        self.assertIn("v-chat-assistant-message", script)
+        self.assertIn("mt-markdown-body", script)
+    def test_minimax_ready_requires_composer_without_login_action(self):
+        ready = '- button "发送消息" [e1] [disabled]\n- button "MiniMax-M3" [e2]'
+        logged_out = ready + '\n- button "登录" [e3]'
+        self.assertTrue(chat.is_chat_ready(ready, "minimaxi"))
+        self.assertFalse(chat.is_chat_ready(logged_out, "minimaxi"))
+
+    def test_selector_input_supports_minimax_contenteditable_editor(self):
+        import camofox_runner
+        with patch.object(camofox_runner, "run", return_value={"result": "set-contenteditable"}) as run_command:
+            camofox_runner.type_text_selector("[data-testid=message-textarea]", "probe", tab_id="tab")
+        command = run_command.call_args.args[0]
+        self.assertEqual(command[1], "eval")
+        self.assertIn("message-textarea", command[2])
+        self.assertIn("InputEvent", command[2])
+
+
 class BatchRunnerTests(unittest.TestCase):
     def test_batch_command_sets_per_platform_output_and_quality_gate(self):
         sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))

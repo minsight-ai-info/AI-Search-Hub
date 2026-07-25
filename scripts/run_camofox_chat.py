@@ -20,6 +20,7 @@ from camofox_runner import (
     save_session,
     snapshot,
     type_text,
+    type_text_selector,
     wait_seconds,
 )
 
@@ -84,15 +85,22 @@ SITE_CONFIG = {
     "minimaxi": {
         "url": "https://agent.minimaxi.com/",
         "input_role": "textbox",
-        "input_hint": "",
+        "input_hint": "输入消息",
+        "input_selector": "[data-testid=message-textarea]",
         "submit_key": "Enter",
-        "login_text": "Sign in",
+        "submit_button_text": "发送消息",
+        "login_text": "登录",
         "answer_roles": ("paragraph",),
         "noise_substrings": COMMON_NOISE_SUBSTRINGS + [
             "内容由 MiniMax 生成",
             "内容由AI生成，重要信息请务必核",
         ],
-        "custom_answer_js": None,
+        "custom_answer_js": (
+            "(() => {"
+            "const segment = Array.from(document.querySelectorAll('[data-testid=assistant-segment-active]')).at(-1);"
+            "return (segment?.innerText || '').trim();"
+            "})()"
+        ),
     },
     "kimi": {
         "url": "https://www.kimi.com/",
@@ -155,7 +163,13 @@ SITE_CONFIG = {
         "login_text": "登录",
         "answer_roles": ("paragraph",),
         "noise_substrings": COMMON_NOISE_SUBSTRINGS,
-        "custom_answer_js": None,
+        "custom_answer_js": (
+            "(() => {"
+            "const assistant = Array.from(document.querySelectorAll('.v-chat-assistant-message')).at(-1);"
+            "const answer = assistant?.querySelector('.mt-markdown-body');"
+            "return (answer?.innerText || '').trim();"
+            "})()"
+        ),
     },
 }
 
@@ -231,6 +245,10 @@ def is_chat_ready(snapshot_text: str, site: str) -> bool:
     hints = config.get("input_hints") or (config.get("input_hint", ""),)
     hints = tuple(hint.lower() for hint in hints if hint)
     lowered = snapshot_text.lower()
+    if config.get("input_selector"):
+        submit_text = str(config.get("submit_button_text", "")).lower()
+        login_text = str(config.get("login_text", "")).lower()
+        return bool(submit_text) and submit_text in lowered and (not login_text or login_text not in lowered)
     if hints:
         return any(hint in lowered for hint in hints)
     # A few sites expose an unlabeled composer.  Do not treat credential forms
@@ -789,17 +807,21 @@ def main(default_site: Optional[str] = None) -> int:
 
     try:
         snap = snapshot(tab_id=tab_id, cwd=repo_root)
-        input_ref = find_ref_by_role(snap, config["input_role"], config.get("input_hint"))
-        if not input_ref:
-            input_ref = find_ref_by_role(snap, "textbox")
-        if not input_ref:
-            raise RuntimeError(
-                f"[{site}] could not find input box in snapshot:\n{snap}"
-            )
+        input_selector = config.get("input_selector")
+        if input_selector:
+            type_text_selector(input_selector, args.prompt, tab_id=tab_id, cwd=repo_root)
+        else:
+            input_ref = find_ref_by_role(snap, config["input_role"], config.get("input_hint"))
+            if not input_ref:
+                input_ref = find_ref_by_role(snap, "textbox")
+            if not input_ref:
+                raise RuntimeError(
+                    f"[{site}] could not find input box in snapshot:\n{snap}"
+                )
+            type_text(input_ref, args.prompt, tab_id=tab_id, cwd=repo_root)
 
         if site == "doubao":
             install_doubao_stream_monitor(tab_id=tab_id, cwd=repo_root)
-        type_text(input_ref, args.prompt, tab_id=tab_id, cwd=repo_root)
         submit_snapshot = snapshot(tab_id=tab_id, cwd=repo_root)
         submit_prompt(site, submit_snapshot, tab_id, cwd=repo_root)
 

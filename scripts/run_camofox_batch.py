@@ -15,6 +15,7 @@ from camofox_runner import (
     run,
     snapshot,
     type_text,
+    type_text_selector,
     wait_seconds,
 )
 from run_camofox_chat import (
@@ -107,12 +108,16 @@ def prepare_site(site: str, prompt: str, repo_root: Path, sessions: set[str], op
     if not wait_for_chat_ready(site, 12, tab_id=tab_id, cwd=repo_root):
         raise RuntimeError("chat composer did not become ready")
     snap = snapshot(tab_id=tab_id, cwd=repo_root)
-    input_ref = find_ref_by_role(snap, config["input_role"], config.get("input_hint"))
-    if not input_ref:
-        input_ref = find_ref_by_role(snap, "textbox")
-    if not input_ref:
-        raise RuntimeError("chat input was not found")
-    type_text(input_ref, prompt, tab_id=tab_id, cwd=repo_root)
+    input_selector = config.get("input_selector")
+    if input_selector:
+        type_text_selector(input_selector, prompt, tab_id=tab_id, cwd=repo_root)
+    else:
+        input_ref = find_ref_by_role(snap, config["input_role"], config.get("input_hint"))
+        if not input_ref:
+            input_ref = find_ref_by_role(snap, "textbox")
+        if not input_ref:
+            raise RuntimeError("chat input was not found")
+        type_text(input_ref, prompt, tab_id=tab_id, cwd=repo_root)
     submit_prompt(site, snapshot(tab_id=tab_id, cwd=repo_root), tab_id, cwd=repo_root)
     return {"site": site, "tab_id": tab_id, "last_answer": "", "stable_count": 0, "started": time.monotonic()}
 
