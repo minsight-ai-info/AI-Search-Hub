@@ -150,6 +150,23 @@ def load_session(name: str, tab_id: Optional[str] = None, cwd: Optional[Path] = 
     run(cmd, cwd=cwd)
 
 
+def fill_credentials(
+    tab_id: str,
+    email_ref: str,
+    password_ref: str,
+    email: str,
+    password: str,
+    cwd: Optional[Path] = None,
+) -> None:
+    """Fill login form using camofox CLI type commands.
+
+    The `fill` command is flaky in some camofox versions, so we use
+    `type` as a more reliable fallback.
+    """
+    type_text(email_ref, email, tab_id=tab_id, cwd=cwd)
+    type_text(password_ref, password, tab_id=tab_id, cwd=cwd)
+
+
 # ---------------------------------------------------------------------------
 # Lightweight selector helpers built on top of snapshot text
 # ---------------------------------------------------------------------------

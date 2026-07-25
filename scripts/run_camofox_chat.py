@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Optional
 
 from camofox_runner import (
+    click,
+    fill_credentials,
     find_ref_by_role,
     find_ref_by_text,
     get_text,
@@ -123,6 +125,8 @@ def parse_args() -> argparse.Namespace:
         help="Target chat site.",
     )
     parser.add_argument("--prompt", required=True, help="Question to send.")
+    parser.add_argument("--email", help="Email for auto-login. Required when no saved session exists.")
+    parser.add_argument("--password", help="Password for auto-login. Required when no saved session exists.")
     parser.add_argument("--output", help="Optional file path to store the final answer.")
     parser.add_argument(
         "--timeout",
@@ -185,7 +189,7 @@ def is_login_page(snapshot_text: str, site: str) -> bool:
     return any(m and m in lowered for m in login_markers if m)
 
 
-def wait_for_login(site: str, login_timeout: int) -> bool:
+def wait_for_login(site: str, login_timeout: int, tab_id: Optional[str] = None, cwd: Optional[Path] = None) -> bool:
     """
     Wait for the user to complete manual login in the camofox browser.
     Returns True if login no longer appears required, False if timed out.
@@ -201,7 +205,7 @@ def wait_for_login(site: str, login_timeout: int) -> bool:
     logged_in = False
 
     while time.time() < deadline:
-        text = snapshot()
+        text = snapshot(tab_id=tab_id, cwd=cwd)
         if text == last_snapshot:
             stable += 1
         else:
@@ -381,19 +385,60 @@ def main(default_site: Optional[str] = None) -> int:
         tab_id = open_url(config["url"], cwd=repo_root)
         print(f"[{site}] opened {config['url']} tab={tab_id}", flush=True)
 
-        wait_for_login(site, args.login_timeout)
-
-        # Detect whether we are still on the login page after waiting.
+        # Wait a bit for the page to load before detecting login UI.
+        wait_seconds(2.0)
         snap = snapshot(tab_id=tab_id, cwd=repo_root)
+
         if is_login_page(snap, site):
-            print(
-                f"[{site}] 仍停留在登录页，本次运行可能失败；"
-                f"请先在 camofox 浏览器完成登录，然后重新运行。",
-                flush=True,
-            )
-        else:
-            print(f"[{site}] saving session '{site}' for reuse", flush=True)
-            save_session(site, tab_id=tab_id, cwd=repo_root)
+            print(f"[{site}] detected login page.", flush=True)
+
+            auto_logged_in = False
+            if args.email and args.password:
+                email_ref = find_ref_by_role(snap, "textbox", "Email") or find_ref_by_role(snap, "textbox", "邮箱")
+                password_ref = find_ref_by_role(snap, "textbox", "Password") or find_ref_by_role(snap, "textbox", "密码")
+                if email_ref and password_ref:
+                    print(f"[{site}] attempting auto-login with provided credentials...", flush=True)
+                    try:
+                        fill_credentials(tab_id, email_ref, password_ref, args.email, args.password, cwd=repo_root)
+                        wait_seconds(1.0)
+
+                        signin_ref = find_ref_by_text(snap, "Sign in") or find_ref_by_text(snap, "登录")
+                        if signin_ref:
+                            click(signin_ref, tab_id=tab_id, cwd=repo_root)
+
+                        wait_seconds(3.0)
+                        post_snap = snapshot(tab_id=tab_id, cwd=repo_root)
+                        if not is_login_page(post_snap, site):
+                            auto_logged_in = True
+                            print(f"[{site}] auto-login succeeded.", flush=True)
+                    except Exception as exc:
+                        print(f"[{site}] auto-login failed: {exc}", flush=True)
+
+            if not auto_logged_in:
+                if not args.email or not args.password:
+                    print(
+                        f"[{site}] 未提供 --email/--password，切换到手动登录模式。"
+                        f"请在 camofox 浏览器中完成登录，最长等待 {args.login_timeout} 秒。",
+                        flush=True,
+                    )
+                else:
+                    print(
+                        f"[{site}] 自动登录未成功，切换到手动登录模式。"
+                        f"请在 camofox 浏览器中完成登录，最长等待 {args.login_timeout} 秒。",
+                        flush=True,
+                    )
+
+                if not wait_for_login(site, args.login_timeout, tab_id=tab_id, cwd=repo_root):
+                    print(
+                        f"[{site}] 等待登录超时（{args.login_timeout} 秒），页面仍显示登录 UI。"
+                        f"请先在 camofox 浏览器完成登录，然后重新运行。",
+                        flush=True,
+                    )
+                    return 1
+
+        # Save session after successful login (auto or manual).
+        print(f"[{site}] saving session '{site}' for reuse", flush=True)
+        save_session(site, tab_id=tab_id, cwd=repo_root)
 
     try:
         snap = snapshot(tab_id=tab_id, cwd=repo_root)
@@ -409,7 +454,7 @@ def main(default_site: Optional[str] = None) -> int:
         press(config["submit_key"], tab_id=tab_id, cwd=repo_root)
 
         answer = collect_answer_from_snapshot(
-            site, args.prompt, args.timeout, args.stable_rounds, args.interval
+            site, args.prompt, args.timeout, args.stable_rounds, args.interval, cwd=repo_root
         )
         if not answer:
             print(f"[{site}] no answer collected within timeout.", flush=True)
