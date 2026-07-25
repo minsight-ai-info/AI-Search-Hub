@@ -162,6 +162,7 @@ class KimiResponseTests(unittest.TestCase):
         script = chat.SITE_CONFIG["kimi"]["custom_answer_js"]
         self.assertIn("chat-content-item-assistant", script)
         self.assertIn("markdown-container", script)
+        self.assertIn("thinking-container", script)
 
     def test_runner_preserves_multiline_eval_result(self):
         import camofox_runner

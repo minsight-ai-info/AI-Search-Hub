@@ -95,7 +95,7 @@ SITE_CONFIG = {
         "custom_answer_js": None,
     },
     "kimi": {
-        "url": "https://kimi.moonshot.cn/",
+        "url": "https://www.kimi.com/",
         "input_role": "textbox",
         "input_hint": "Ask anything, or task an agent...",
         "input_hints": (
@@ -113,7 +113,8 @@ SITE_CONFIG = {
             "(() => {"
             "const assistant = Array.from(document.querySelectorAll('.chat-content-item-assistant')).at(-1);"
             "if (!assistant) return '';"
-            "const finalBlock = Array.from(assistant.querySelectorAll('.markdown-container')).at(-1);"
+            "const blocks = Array.from(assistant.querySelectorAll('.markdown-container')).filter(block => !block.closest('.thinking-container'));"
+            "const finalBlock = blocks.at(-1);"
             "return (finalBlock?.innerText || '').trim();"
             "})()"
         ),
