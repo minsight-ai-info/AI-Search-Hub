@@ -42,7 +42,18 @@ def run(cmd: list[str], cwd: Optional[Path] = None) -> dict:
         except json.JSONDecodeError:
             pass
 
-    return {"ok": True, "raw": out}
+    # camofox-browser eval/console output uses key: value lines.
+    parsed: dict = {"ok": True, "raw": out}
+    for line in out.splitlines():
+        if line.startswith("result:"):
+            parsed["result"] = line[len("result:"):].strip()
+        elif line.startswith("resultType:"):
+            parsed["resultType"] = line[len("resultType:"):].strip()
+        elif line.startswith("truncated:"):
+            parsed["truncated"] = line[len("truncated:"):].strip().lower() == "true"
+        elif line.startswith("ok:"):
+            parsed["ok"] = line[len("ok:"):].strip().lower() == "true"
+    return parsed
 
 
 # ---------------------------------------------------------------------------
