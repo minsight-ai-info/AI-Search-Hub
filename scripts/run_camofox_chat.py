@@ -322,6 +322,8 @@ def collect_answer_from_snapshot(
     timeout: int,
     stable_rounds: int,
     interval: float,
+    tab_id: str,
+    cwd: Optional[Path] = None,
 ) -> str:
     """Poll snapshots and extract the answer text."""
     deadline = time.time() + timeout
@@ -330,7 +332,7 @@ def collect_answer_from_snapshot(
     last_snapshot = ""
 
     while time.time() < deadline:
-        snap = snapshot()
+        snap = snapshot(tab_id=tab_id, cwd=cwd)
         if snap == last_snapshot:
             stable_count += 1
         else:
@@ -454,7 +456,7 @@ def main(default_site: Optional[str] = None) -> int:
         press(config["submit_key"], tab_id=tab_id, cwd=repo_root)
 
         answer = collect_answer_from_snapshot(
-            site, args.prompt, args.timeout, args.stable_rounds, args.interval, cwd=repo_root
+            site, args.prompt, args.timeout, args.stable_rounds, args.interval, tab_id, cwd=repo_root
         )
         if not answer:
             print(f"[{site}] no answer collected within timeout.", flush=True)
