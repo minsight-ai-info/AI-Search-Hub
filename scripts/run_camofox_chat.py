@@ -7,7 +7,6 @@ from typing import Optional
 
 from camofox_runner import (
     click,
-    fill_credentials,
     find_ref_by_role,
     find_ref_by_text,
     get_text,
@@ -61,27 +60,7 @@ SITE_CONFIG = {
         ],
         "custom_answer_js": None,
     },
-    "gemini": {
-        "url": "https://gemini.google.com/app",
-        "input_role": "textbox",
-        "input_hint": "Enter a prompt",
-        "submit_key": "Enter",
-        "submit_button_text": "Send message",
-        "login_text": "Sign in",
-        "answer_roles": ("paragraph",),
-        "noise_substrings": COMMON_NOISE_SUBSTRINGS,
-        "custom_answer_js": None,
-    },
-    "grok": {
-        "url": "https://grok.com/",
-        "input_role": "textbox",
-        "input_hint": "Ask Grok anything",
-        "submit_key": "Enter",
-        "login_text": "Sign in",
-        "answer_roles": ("paragraph",),
-        "noise_substrings": COMMON_NOISE_SUBSTRINGS,
-        "custom_answer_js": None,
-    },
+
     "minimaxi": {
         "url": "https://agent.minimaxi.com/",
         "input_role": "textbox",
@@ -145,16 +124,7 @@ SITE_CONFIG = {
             "})()"
         ),
     },
-    "yuanbao": {
-        "url": "https://yuanbao.tencent.com/chat",
-        "input_role": "textbox",
-        "input_hint": "",
-        "submit_key": "Enter",
-        "login_text": "登录",
-        "answer_roles": ("paragraph",),
-        "noise_substrings": COMMON_NOISE_SUBSTRINGS,
-        "custom_answer_js": None,
-    },
+
     "longcat": {
         "url": "https://longcat.chat/",
         "input_role": "textbox",
@@ -185,8 +155,6 @@ def parse_args() -> argparse.Namespace:
         help="Target chat site.",
     )
     parser.add_argument("--prompt", required=True, help="Question to send.")
-    parser.add_argument("--email", help="Email for auto-login. Required when no saved session exists.")
-    parser.add_argument("--password", help="Password for auto-login. Required when no saved session exists.")
     parser.add_argument("--output", help="Optional file path to store the final answer.")
     parser.add_argument(
         "--timeout",
@@ -443,31 +411,6 @@ def is_answer_ready(site: str, answer: str, snapshot_text: str, min_chars: int =
     return not markers or any(marker.lower() in snapshot_text.lower() for marker in markers)
 
 
-def extract_gemini_answer(snapshot_text: str) -> str:
-    """Extract only the assistant section from Gemini's AX snapshot."""
-    import re
-
-    in_answer = False
-    lines: list[str] = []
-    for raw_line in snapshot_text.splitlines():
-        stripped = raw_line.strip()
-        if not in_answer:
-            if stripped.startswith('- heading "Gemini said"'):
-                in_answer = True
-            continue
-        if 'textbox "Enter a prompt for Gemini"' in stripped:
-            break
-        if stripped.startswith('- paragraph:'):
-            content = stripped.split(':', 1)[1].strip()
-            if content:
-                lines.append(content)
-            continue
-        match = re.match(r'- heading "([^"]+)"', stripped)
-        if match:
-            lines.append(match.group(1).strip())
-    return "\n".join(lines).strip()
-
-
 def extract_kimi_answer(snapshot_text: str) -> str:
     """Extract Kimi's final answer while skipping its exposed planning trace."""
     import re
@@ -513,8 +456,6 @@ def extract_answer_from_snapshot(
     More robust version with stronger login page filtering."""
     if site == "qwen":
         return extract_qwen_answer(snapshot_text)
-    if site == "gemini":
-        return extract_gemini_answer(snapshot_text)
     if site == "kimi":
         return extract_kimi_answer(snapshot_text)
 
@@ -769,31 +710,10 @@ def main(default_site: Optional[str] = None) -> int:
     snap = snapshot(tab_id=tab_id, cwd=repo_root)
     session_saved = False
     if has_login_blocker(snap, site):
-        print(f"[{site}] detected blocking login UI.", flush=True)
-        auto_logged_in = False
-        if args.email and args.password:
-            email_ref = find_ref_by_role(snap, "textbox", "Email") or find_ref_by_role(snap, "textbox", "邮箱")
-            password_ref = find_ref_by_role(snap, "textbox", "Password") or find_ref_by_role(snap, "textbox", "密码")
-            if email_ref and password_ref:
-                print(f"[{site}] attempting auto-login with provided credentials...", flush=True)
-                try:
-                    fill_credentials(tab_id, email_ref, password_ref, args.email, args.password, cwd=repo_root)
-                    refreshed = snapshot(tab_id=tab_id, cwd=repo_root)
-                    signin_ref = find_ref_by_text(refreshed, "Sign in") or find_ref_by_text(refreshed, "登录")
-                    if signin_ref:
-                        click(signin_ref, tab_id=tab_id, cwd=repo_root)
-                    auto_logged_in = wait_for_chat_ready(site, 8, tab_id=tab_id, cwd=repo_root)
-                    if auto_logged_in:
-                        save_session(site, tab_id=tab_id, cwd=repo_root)
-                        session_saved = True
-                        print(f"[{site}] auto-login succeeded; session saved.", flush=True)
-                except Exception as exc:
-                    print(f"[{site}] auto-login failed: {exc}", flush=True)
-
-        if not auto_logged_in:
-            if not wait_for_login(site, args.login_timeout, tab_id=tab_id, cwd=repo_root):
-                return 1
-            session_saved = True
+        print(f"[{site}] detected blocking login UI; complete login in camofox without sharing credentials.", flush=True)
+        if not wait_for_login(site, args.login_timeout, tab_id=tab_id, cwd=repo_root):
+            return 1
+        session_saved = True
     elif not wait_for_chat_ready(site, 12, tab_id=tab_id, cwd=repo_root):
         save_debug_state(site, "chat-not-ready", snap, tab_id=tab_id, cwd=repo_root)
         print(f"[{site}] 页面未进入可用聊天状态，已保存调试快照。", flush=True)

@@ -1,7 +1,10 @@
 __pycache__/
 *.pyc
 .DS_Store
+.pytest_cache/
 
+# Runtime answers, screenshots, and debug snapshots belong under ~/artifacts.
 out/
+artifacts/
 chrome_debug_profile_skill/
 scripts/chrome_debug_profile_skill/

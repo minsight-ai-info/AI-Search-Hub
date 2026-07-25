@@ -10,12 +10,12 @@ import run_camofox_chat as chat  # noqa: E402
 class LoginStateTests(unittest.TestCase):
     def test_visible_login_action_does_not_block_a_ready_chat(self):
         snapshot = '''
-- button "Log in" [e1]
-- textbox "Ask Grok anything" [e2]
+- button "登录" [e1]
+- textbox "Tell me what you need." [e2]
 '''
-        self.assertTrue(chat.is_chat_ready(snapshot, "grok"))
-        self.assertFalse(chat.has_login_blocker(snapshot, "grok"))
-        self.assertFalse(chat.is_login_page(snapshot, "grok"))
+        self.assertTrue(chat.is_chat_ready(snapshot, "longcat"))
+        self.assertFalse(chat.has_login_blocker(snapshot, "longcat"))
+        self.assertFalse(chat.is_login_page(snapshot, "longcat"))
 
     def test_doubao_login_dialog_blocks_even_when_chat_input_exists(self):
         snapshot = '''
@@ -34,8 +34,8 @@ class LoginStateTests(unittest.TestCase):
 - textbox "Password" [e2]
 - button "Sign in" [e3]
 '''
-        self.assertTrue(chat.has_login_blocker(snapshot, "grok"))
-        self.assertTrue(chat.is_login_page(snapshot, "grok"))
+        self.assertTrue(chat.has_login_blocker(snapshot, "longcat"))
+        self.assertTrue(chat.is_login_page(snapshot, "longcat"))
     def test_kimi_logged_in_composer_hint_is_ready(self):
         snapshot = '- textbox [e20]:\n- text: Type "/" to invoke plugins and skills'
         self.assertTrue(chat.is_chat_ready(snapshot, "kimi"))
@@ -49,7 +49,7 @@ class AnswerExtractionTests(unittest.TestCase):
 - text: Log in
 '''
         self.assertEqual(
-            chat.extract_answer_from_snapshot(snapshot, "grok", "hello"),
+            chat.extract_answer_from_snapshot(snapshot, "longcat", "hello"),
             "AI Search Hub test successful",
         )
 
@@ -59,7 +59,7 @@ class AnswerExtractionTests(unittest.TestCase):
 - text: Log in
 - textbox "Email" [e1]
 '''
-        self.assertEqual(chat.extract_answer_from_snapshot(snapshot, "grok", "hello"), "")
+        self.assertEqual(chat.extract_answer_from_snapshot(snapshot, "longcat", "hello"), "")
 
     def test_extraction_discards_known_chat_shell_noise(self):
         snapshot = '''
@@ -69,23 +69,6 @@ class AnswerExtractionTests(unittest.TestCase):
 - text: Need help? Feedback
 '''
         self.assertEqual(chat.extract_answer_from_snapshot(snapshot, "kimi", "hello"), "")
-
-    def test_gemini_extraction_uses_answer_boundary(self):
-        snapshot = '''
-- heading "You said question" [level=2]:
-  - paragraph: question
-- heading "Gemini said" [level=2]
-- paragraph: First answer paragraph
-- heading "1. Details" [level=2]
-- paragraph: Second answer paragraph
-- group:
-  - textbox "Enter a prompt for Gemini" [e1]
-- paragraph: Gemini is AI and can make mistakes.
-'''
-        self.assertEqual(
-            chat.extract_answer_from_snapshot(snapshot, "gemini", "question"),
-            "First answer paragraph\n1. Details\nSecond answer paragraph",
-        )
 
     def test_kimi_extraction_starts_at_final_answer_heading(self):
         snapshot = '''
@@ -229,14 +212,13 @@ class BatchRunnerTests(unittest.TestCase):
 
 
 class PromptSubmissionTests(unittest.TestCase):
-    def test_gemini_uses_send_button_when_available(self):
+    def test_minimax_uses_send_button_when_available(self):
         with (
-            patch.dict(chat.SITE_CONFIG["gemini"], {"submit_button_text": "Send message"}),
             patch.object(chat, "find_ref_by_text", return_value="e14"),
             patch.object(chat, "click") as click_submit,
             patch.object(chat, "press") as press_enter,
         ):
-            chat.submit_prompt("gemini", "- button \"Send message\" [e14]", "tab")
+            chat.submit_prompt("minimaxi", "- button \"发送消息\" [e14]", "tab")
         click_submit.assert_called_once_with("e14", tab_id="tab", cwd=None)
         press_enter.assert_not_called()
 
@@ -244,14 +226,14 @@ class PromptSubmissionTests(unittest.TestCase):
 class LoginWaitTests(unittest.TestCase):
     def test_wait_for_chat_ready_requires_consecutive_composer_snapshots(self):
         loading = '- heading: Loading'
-        ready = '- textbox "Ask Grok anything" [e2]'
+        ready = '- textbox "How can I help you today?" [e2]'
         snapshots = iter([loading, ready, ready])
         with (
             patch.object(chat, "snapshot", side_effect=lambda **_: next(snapshots)) as take_snapshot,
             patch.object(chat, "wait_seconds"),
             patch.object(chat.time, "time", side_effect=[0, 0, 1, 2, 3]),
         ):
-            self.assertTrue(chat.wait_for_chat_ready("grok", 10, tab_id="tab"))
+            self.assertTrue(chat.wait_for_chat_ready("qwen", 10, tab_id="tab"))
         self.assertEqual(take_snapshot.call_count, 3)
 
     def test_wait_for_login_saves_only_after_ready_state_settles(self):
