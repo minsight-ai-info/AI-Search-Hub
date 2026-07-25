@@ -63,6 +63,7 @@ SITE_CONFIG = {
         "input_role": "textbox",
         "input_hint": "Enter a prompt",
         "submit_key": "Enter",
+        "submit_button_text": "Send message",
         "login_text": "Sign in",
         "answer_roles": ("paragraph",),
         "noise_substrings": COMMON_NOISE_SUBSTRINGS,
@@ -95,6 +96,10 @@ SITE_CONFIG = {
         "url": "https://kimi.moonshot.cn/",
         "input_role": "textbox",
         "input_hint": "Ask anything, or task an agent...",
+        "input_hints": (
+            "Ask anything, or task an agent...",
+            "Type \"/\" to invoke plugins and skills",
+        ),
         "submit_key": "Enter",
         "login_text": "登录",
         "answer_roles": ("paragraph",),
@@ -208,10 +213,11 @@ def find_repo_root(start: Optional[str]) -> Path:
 def is_chat_ready(snapshot_text: str, site: str) -> bool:
     """Return whether the site's chat composer is present in an AX snapshot."""
     config = SITE_CONFIG[site]
-    hint = config.get("input_hint", "").lower()
+    hints = config.get("input_hints") or (config.get("input_hint", ""),)
+    hints = tuple(hint.lower() for hint in hints if hint)
     lowered = snapshot_text.lower()
-    if hint:
-        return hint in lowered
+    if hints:
+        return any(hint in lowered for hint in hints)
     # A few sites expose an unlabeled composer.  Do not treat credential forms
     # as a ready chat UI; those are handled as a login blocker below.
     return "textbox" in lowered and not any(
@@ -354,6 +360,67 @@ def normalize_text(text: str, noise_substrings: Optional[list[str]] = None) -> s
     return "\n".join(lines).strip()
 
 
+def extract_gemini_answer(snapshot_text: str) -> str:
+    """Extract only the assistant section from Gemini's AX snapshot."""
+    import re
+
+    in_answer = False
+    lines: list[str] = []
+    for raw_line in snapshot_text.splitlines():
+        stripped = raw_line.strip()
+        if not in_answer:
+            if stripped.startswith('- heading "Gemini said"'):
+                in_answer = True
+            continue
+        if 'textbox "Enter a prompt for Gemini"' in stripped:
+            break
+        if stripped.startswith('- paragraph:'):
+            content = stripped.split(':', 1)[1].strip()
+            if content:
+                lines.append(content)
+            continue
+        match = re.match(r'- heading "([^"]+)"', stripped)
+        if match:
+            lines.append(match.group(1).strip())
+    return "\n".join(lines).strip()
+
+
+def extract_kimi_answer(snapshot_text: str) -> str:
+    """Extract Kimi's final answer while skipping its exposed planning trace."""
+    import re
+
+    in_answer = False
+    lines: list[str] = []
+    stop_markers = (
+        "- text: High demand.",
+        "- textbox [",
+        "- text: Ask anything.",
+        "- text: AI-generated, for reference only",
+    )
+    for raw_line in snapshot_text.splitlines():
+        stripped = raw_line.strip()
+        heading = re.match(r'- heading "([^"]+)" \[level=([0-9]+)\]', stripped)
+        if not in_answer:
+            if heading and heading.group(2) == "1":
+                in_answer = True
+                lines.append(heading.group(1).strip())
+            continue
+        if any(stripped.startswith(marker) for marker in stop_markers):
+            break
+        if heading:
+            lines.append(heading.group(1).strip())
+            continue
+        for role in ("listitem", "paragraph", "strong", "text", "code"):
+            prefix = f"- {role}:"
+            if stripped.startswith(prefix):
+                content = stripped[len(prefix):].strip()
+                content = content.split(" High demand.", 1)[0].rstrip()
+                if content:
+                    lines.append(content)
+                break
+    return "\n".join(dict.fromkeys(lines)).strip()
+
+
 def extract_answer_from_snapshot(
     snapshot_text: str,
     site: str,
@@ -361,6 +428,11 @@ def extract_answer_from_snapshot(
 ) -> str:
     """Extract the assistant answer from an accessibility snapshot.
     More robust version with stronger login page filtering."""
+    if site == "gemini":
+        return extract_gemini_answer(snapshot_text)
+    if site == "kimi":
+        return extract_kimi_answer(snapshot_text)
+
     config = SITE_CONFIG[site]
     noise = [*config.get("noise_substrings", []), *CHAT_SHELL_NOISE]
     answer_roles = config.get("answer_roles", ("paragraph",))
@@ -495,6 +567,23 @@ def collect_answer_from_snapshot(
     return last_answer.strip()
 
 
+def submit_prompt(
+    site: str,
+    snapshot_text: str,
+    tab_id: str,
+    cwd: Optional[Path] = None,
+) -> None:
+    """Submit with a site-specific button when Enter does not send the prompt."""
+    config = SITE_CONFIG[site]
+    button_text = config.get("submit_button_text")
+    if button_text:
+        button_ref = find_ref_by_text(snapshot_text, button_text)
+        if button_ref:
+            click(button_ref, tab_id=tab_id, cwd=cwd)
+            return
+    press(config["submit_key"], tab_id=tab_id, cwd=cwd)
+
+
 def main(default_site: Optional[str] = None) -> int:
     try:
         if hasattr(sys.stdout, "reconfigure"):
@@ -577,7 +666,8 @@ def main(default_site: Optional[str] = None) -> int:
             )
 
         type_text(input_ref, args.prompt, tab_id=tab_id, cwd=repo_root)
-        press(config["submit_key"], tab_id=tab_id, cwd=repo_root)
+        submit_snapshot = snapshot(tab_id=tab_id, cwd=repo_root)
+        submit_prompt(site, submit_snapshot, tab_id, cwd=repo_root)
 
         answer = collect_answer_from_snapshot(
             site, args.prompt, args.timeout, args.stable_rounds, args.interval, tab_id, cwd=repo_root

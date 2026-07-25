@@ -36,6 +36,9 @@ class LoginStateTests(unittest.TestCase):
 '''
         self.assertTrue(chat.has_login_blocker(snapshot, "grok"))
         self.assertTrue(chat.is_login_page(snapshot, "grok"))
+    def test_kimi_logged_in_composer_hint_is_ready(self):
+        snapshot = '- textbox [e20]:\n- text: Type "/" to invoke plugins and skills'
+        self.assertTrue(chat.is_chat_ready(snapshot, "kimi"))
 
 
 class AnswerExtractionTests(unittest.TestCase):
@@ -66,6 +69,51 @@ class AnswerExtractionTests(unittest.TestCase):
 - text: Need help? Feedback
 '''
         self.assertEqual(chat.extract_answer_from_snapshot(snapshot, "kimi", "hello"), "")
+
+    def test_gemini_extraction_uses_answer_boundary(self):
+        snapshot = '''
+- heading "You said question" [level=2]:
+  - paragraph: question
+- heading "Gemini said" [level=2]
+- paragraph: First answer paragraph
+- heading "1. Details" [level=2]
+- paragraph: Second answer paragraph
+- group:
+  - textbox "Enter a prompt for Gemini" [e1]
+- paragraph: Gemini is AI and can make mistakes.
+'''
+        self.assertEqual(
+            chat.extract_answer_from_snapshot(snapshot, "gemini", "question"),
+            "First answer paragraph\n1. Details\nSecond answer paragraph",
+        )
+
+    def test_kimi_extraction_starts_at_final_answer_heading(self):
+        snapshot = '''
+- text: Internal planning text
+- heading "Final title" [level=1]
+- heading "Section" [level=2]
+- listitem: First point
+- strong: Important label
+- text: Follow-up detail High demand. Switched to K2.6 Instant for speed.
+- textbox [e1]:
+'''
+        self.assertEqual(
+            chat.extract_answer_from_snapshot(snapshot, "kimi", "question"),
+            "Final title\nSection\nFirst point\nImportant label\nFollow-up detail",
+        )
+
+
+class PromptSubmissionTests(unittest.TestCase):
+    def test_gemini_uses_send_button_when_available(self):
+        with (
+            patch.dict(chat.SITE_CONFIG["gemini"], {"submit_button_text": "Send message"}),
+            patch.object(chat, "find_ref_by_text", return_value="e14"),
+            patch.object(chat, "click") as click_submit,
+            patch.object(chat, "press") as press_enter,
+        ):
+            chat.submit_prompt("gemini", "- button \"Send message\" [e14]", "tab")
+        click_submit.assert_called_once_with("e14", tab_id="tab", cwd=None)
+        press_enter.assert_not_called()
 
 
 class LoginWaitTests(unittest.TestCase):
