@@ -113,14 +113,25 @@ def wait_seconds(seconds: float) -> None:
 def list_sessions(cwd: Optional[Path] = None) -> list[str]:
     """List saved camofox session names."""
     result = run(["camofox-browser", "session", "list", "--format", "json"], cwd=cwd)
-    raw = result.get("raw", "")
-    try:
-        data = json.loads(raw)
-        if isinstance(data, list):
-            return [str(item) for item in data if item]
-    except (json.JSONDecodeError, TypeError):
-        pass
-    return []
+    if isinstance(result, list):
+        data = result
+    else:
+        raw = result.get("raw", "") if isinstance(result, dict) else ""
+        try:
+            data = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            return []
+    if not isinstance(data, list):
+        return []
+    names: list[str] = []
+    for item in data:
+        if isinstance(item, str) and item:
+            names.append(item)
+        elif isinstance(item, dict):
+            name = item.get("name")
+            if isinstance(name, str) and name:
+                names.append(name)
+    return names
 
 
 def save_session(name: str, tab_id: Optional[str] = None, cwd: Optional[Path] = None) -> None:

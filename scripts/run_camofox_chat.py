@@ -386,9 +386,9 @@ def main(default_site: Optional[str] = None) -> int:
                 f"until you complete login and rerun.",
                 flush=True,
             )
-
-        print(f"[{site}] saving session '{site}' for reuse", flush=True)
-        save_session(site, tab_id=tab_id, cwd=repo_root)
+        else:
+            print(f"[{site}] saving session '{site}' for reuse", flush=True)
+            save_session(site, tab_id=tab_id, cwd=repo_root)
 
     try:
         snap = snapshot(tab_id=tab_id, cwd=repo_root)
