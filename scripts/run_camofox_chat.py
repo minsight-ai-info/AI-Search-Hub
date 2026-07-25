@@ -52,6 +52,7 @@ SITE_CONFIG = {
         "login_signup_text": "Sign up",
         "answer_roles": ("paragraph", "heading"),
         "answer_contains": ("Thinking completed",),
+        "completion_markers": ("Regenerate",),
         "noise_substrings": COMMON_NOISE_SUBSTRINGS + [
             "AI-generated content may not be accurate",
             "By using Qwen Studio, you agree to our Terms of Service and Privacy Policy",
@@ -122,9 +123,7 @@ SITE_CONFIG = {
             "const wrappers = Array.from(document.querySelectorAll('div.flex.flex-col.flex-grow.max-w-full.min-w-0'));"
             "if (!wrappers.length) return '';"
             "const lastWrapper = wrappers[wrappers.length - 1];"
-            "const firstBlock = lastWrapper.children[0];"
-            "if (!firstBlock) return '';"
-            "return (firstBlock.innerText || firstBlock.textContent || '').trim();"
+            "return (lastWrapper.innerText || lastWrapper.textContent || '').trim();"
             "})()"
         ),
     },
@@ -188,6 +187,12 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=600,
         help="Maximum seconds to wait for manual login.",
+    )
+    parser.add_argument(
+        "--min-answer-chars",
+        type=int,
+        default=1,
+        help="Minimum answer length before it can be accepted as complete.",
     )
     parser.add_argument(
         "--repo-root",
@@ -360,6 +365,56 @@ def normalize_text(text: str, noise_substrings: Optional[list[str]] = None) -> s
     return "\n".join(lines).strip()
 
 
+def extract_qwen_answer(snapshot_text: str) -> str:
+    """Extract Qwen's assistant section, excluding its sidebar and user prompt."""
+    import re
+
+    in_main = False
+    in_answer = False
+    lines: list[str] = []
+    for raw_line in snapshot_text.splitlines():
+        stripped = raw_line.strip()
+        if stripped == "- main:":
+            in_main = True
+            continue
+        if not in_main:
+            continue
+        if 'textbox "How can I help you today?"' in stripped:
+            break
+        if not in_answer:
+            if "Thinking completed" not in stripped:
+                continue
+            in_answer = True
+            tail = stripped.split("Thinking completed", 1)[1].strip()
+            if tail:
+                lines.append(tail)
+            continue
+        heading = re.match(r'- heading "([^"]+)"', stripped)
+        if heading:
+            lines.append(heading.group(1).strip())
+            continue
+        for role in ("paragraph", "text", "listitem", "strong", "code"):
+            prefix = f"- {role}:"
+            if stripped.startswith(prefix):
+                content = stripped[len(prefix):].strip()
+                if content:
+                    lines.append(content)
+                break
+    return "\n".join(dict.fromkeys(lines)).strip()
+
+
+def is_answer_ready(site: str, answer: str, snapshot_text: str, min_chars: int = 1) -> bool:
+    """Validate that extracted text is a completed assistant response."""
+    normalized = answer.strip()
+    if len(normalized) < min_chars:
+        return False
+    lowered = normalized.lower()
+    if any(marker in lowered for marker in ("system is currently busy", "capacity is busy", "please try again later")):
+        return False
+    markers = SITE_CONFIG[site].get("completion_markers", ())
+    return not markers or any(marker.lower() in snapshot_text.lower() for marker in markers)
+
+
 def extract_gemini_answer(snapshot_text: str) -> str:
     """Extract only the assistant section from Gemini's AX snapshot."""
     import re
@@ -428,6 +483,8 @@ def extract_answer_from_snapshot(
 ) -> str:
     """Extract the assistant answer from an accessibility snapshot.
     More robust version with stronger login page filtering."""
+    if site == "qwen":
+        return extract_qwen_answer(snapshot_text)
     if site == "gemini":
         return extract_gemini_answer(snapshot_text)
     if site == "kimi":
@@ -510,6 +567,15 @@ def extract_answer_from_snapshot(
     return answer.strip()
 
 
+def clean_custom_answer(answer: str, question: str, site: str) -> str:
+    """Remove known transient status text from a DOM-selector extraction."""
+    import re
+
+    answer = answer.replace(question, "").strip()
+    answer = re.sub(r"搜索\s*\d+\s*个关键词\s*，?\s*参考\s*\d+\s*篇资料", "", answer)
+    return normalize_text(answer, [*SITE_CONFIG[site].get("noise_substrings", []), *CHAT_SHELL_NOISE])
+
+
 def collect_answer_from_snapshot(
     site: str,
     question: str,
@@ -518,53 +584,44 @@ def collect_answer_from_snapshot(
     interval: float,
     tab_id: str,
     cwd: Optional[Path] = None,
+    min_answer_chars: int = 1,
 ) -> str:
-    """Poll snapshots and extract the answer text."""
+    """Poll until a valid, completed assistant response is stable."""
     deadline = time.time() + timeout
     last_answer = ""
     stable_count = 0
-    last_snapshot = ""
     config = SITE_CONFIG[site]
     custom_js = config.get("custom_answer_js")
 
     while time.time() < deadline:
         snap = snapshot(tab_id=tab_id, cwd=cwd)
-        if snap == last_snapshot:
-            stable_count += 1
-        else:
-            last_snapshot = snap
-            if stable_count >= stable_rounds:
-                stable_count = stable_rounds - 1
-            else:
-                stable_count = 0
-
         if custom_js:
             try:
                 js_result = run(
                     ["camofox-browser", "eval", custom_js, tab_id],
                     cwd=cwd,
                 )
-                answer = js_result.get("result", "") or js_result.get("raw", "")
-                if isinstance(answer, str):
-                    answer = answer.strip()
+                raw_answer = js_result.get("result", "") or js_result.get("raw", "")
+                answer = clean_custom_answer(raw_answer, question, site) if isinstance(raw_answer, str) else ""
             except Exception:
                 answer = ""
         else:
             answer = extract_answer_from_snapshot(snap, site, question)
 
-        if answer:
-            if answer == last_answer:
-                stable_count += 1
-            else:
-                last_answer = answer
-                stable_count = 0
-
-        if stable_count >= stable_rounds and last_answer:
+        if not is_answer_ready(site, answer, snap, min_answer_chars):
+            stable_count = 0
+            wait_seconds(interval)
+            continue
+        if answer == last_answer:
+            stable_count += 1
+        else:
+            last_answer = answer
+            stable_count = 0
+        if stable_count >= stable_rounds:
             return last_answer
-
         wait_seconds(interval)
 
-    return last_answer.strip()
+    return last_answer.strip() if is_answer_ready(site, last_answer, "", min_answer_chars) else ""
 
 
 def submit_prompt(
@@ -670,7 +727,14 @@ def main(default_site: Optional[str] = None) -> int:
         submit_prompt(site, submit_snapshot, tab_id, cwd=repo_root)
 
         answer = collect_answer_from_snapshot(
-            site, args.prompt, args.timeout, args.stable_rounds, args.interval, tab_id, cwd=repo_root
+            site,
+            args.prompt,
+            args.timeout,
+            args.stable_rounds,
+            args.interval,
+            tab_id,
+            cwd=repo_root,
+            min_answer_chars=args.min_answer_chars,
         )
         if not answer:
             print(f"[{site}] no answer collected within timeout.", flush=True)

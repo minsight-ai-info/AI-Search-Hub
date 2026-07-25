@@ -101,6 +101,55 @@ class AnswerExtractionTests(unittest.TestCase):
             chat.extract_answer_from_snapshot(snapshot, "kimi", "question"),
             "Final title\nSection\nFirst point\nImportant label\nFollow-up detail",
         )
+    def test_qwen_extraction_ignores_sidebar_and_user_message(self):
+        snapshot = '''
+- text: Community Coder Projects All chats
+- main:
+  - paragraph: question
+  - text: Thinking completed
+  - text: Final answer opening.
+  - heading "Key finding" [level=3]
+  - listitem: Supporting detail
+  - button "Regenerate" [e1]
+  - textbox "How can I help you today?" [e2]
+'''
+        self.assertEqual(
+            chat.extract_answer_from_snapshot(snapshot, "qwen", "question"),
+            "Final answer opening.\nKey finding\nSupporting detail",
+        )
+
+
+class CompletionGateTests(unittest.TestCase):
+    def test_qwen_answer_is_not_ready_until_regenerate_is_visible(self):
+        answer = "A sufficiently detailed answer that is long enough to be credible."
+        self.assertFalse(chat.is_answer_ready("qwen", answer, "- text: Thinking completed", 20))
+        self.assertTrue(chat.is_answer_ready("qwen", answer, "- button \"Regenerate\" [e1]", 20))
+
+    def test_search_status_fails_research_answer_length_gate(self):
+        self.assertFalse(chat.is_answer_ready("doubao", "搜索 4 个关键词，参考 24 篇资料", "", 200))
+class BatchRunnerTests(unittest.TestCase):
+    def test_batch_command_sets_per_platform_output_and_quality_gate(self):
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+        import run_camofox_batch as batch
+
+        command = batch.build_command(
+            repo_root=Path("/repo"),
+            site="qwen",
+            prompt="research question",
+            output_dir=Path("/output"),
+            timeout=90,
+            min_answer_chars=200,
+        )
+        self.assertIn("--min-answer-chars", command)
+        self.assertIn("200", command)
+        self.assertIn("/output/qwen.txt", command)
+
+    def test_navigation_errors_are_retriable(self):
+        import run_camofox_batch as batch
+
+        self.assertTrue(batch.is_retriable_open_error("NS_BINDING_ABORTED"))
+        self.assertTrue(batch.is_retriable_open_error("NS_ERROR_UNKNOWN_HOST"))
+        self.assertFalse(batch.is_retriable_open_error("invalid site configuration"))
 
 
 class PromptSubmissionTests(unittest.TestCase):
