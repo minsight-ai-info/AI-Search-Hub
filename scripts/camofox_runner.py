@@ -44,15 +44,28 @@ def run(cmd: list[str], cwd: Optional[Path] = None) -> dict:
 
     # camofox-browser eval/console output uses key: value lines.
     parsed: dict = {"ok": True, "raw": out}
-    for line in out.splitlines():
+    lines = out.splitlines()
+    index = 0
+    while index < len(lines):
+        line = lines[index]
         if line.startswith("result:"):
-            parsed["result"] = line[len("result:"):].strip()
-        elif line.startswith("resultType:"):
+            result_lines = [line[len("result:"):].strip()]
+            index += 1
+            while index < len(lines) and not any(
+                lines[index].startswith(prefix)
+                for prefix in ("resultType:", "truncated:", "ok:", "result:")
+            ):
+                result_lines.append(lines[index])
+                index += 1
+            parsed["result"] = "\n".join(result_lines).strip()
+            continue
+        if line.startswith("resultType:"):
             parsed["resultType"] = line[len("resultType:"):].strip()
         elif line.startswith("truncated:"):
             parsed["truncated"] = line[len("truncated:"):].strip().lower() == "true"
         elif line.startswith("ok:"):
             parsed["ok"] = line[len("ok:"):].strip().lower() == "true"
+        index += 1
     return parsed
 
 
@@ -88,38 +101,56 @@ def click(ref: str, tab_id: Optional[str] = None, cwd: Optional[Path] = None) ->
 
 
 def type_text(ref: str, text: str, tab_id: Optional[str] = None, cwd: Optional[Path] = None) -> None:
-    # camofox-browser `type` appends rather than replacing in some versions;
-    # focus the field and clear it via JS before typing.
+    """Replace a native input or contenteditable composer with text."""
     try:
         click(ref, tab_id=tab_id, cwd=cwd)
     except Exception:
         pass
     try:
-        _clear_focused_via_js(tab_id=tab_id, cwd=cwd)
+        focused_kind = _clear_focused_via_js(tab_id=tab_id, cwd=cwd)
     except Exception:
-        pass
+        focused_kind = ""
+    if focused_kind == "contenteditable":
+        expression = (
+            "(() => {"
+            "const el = document.activeElement;"
+            f"const text = {json.dumps(text)};"
+            "if (!el || !el.isContentEditable) return 'not-contenteditable';"
+            "el.textContent = text;"
+            "el.dispatchEvent(new InputEvent('input', {bubbles: true, inputType: 'insertText', data: text}));"
+            "return 'set-contenteditable';"
+            "})()"
+        )
+        cmd = ["camofox-browser", "eval", expression]
+        if tab_id:
+            cmd.append(tab_id)
+        run(cmd, cwd=cwd)
+        return
     cmd = ["camofox-browser", "type", ref, text]
     if tab_id:
         cmd.append(tab_id)
     run(cmd, cwd=cwd)
 
 
-def _clear_focused_via_js(tab_id: Optional[str] = None, cwd: Optional[Path] = None) -> None:
+def _clear_focused_via_js(tab_id: Optional[str] = None, cwd: Optional[Path] = None) -> str:
     """Best-effort clear of the currently focused input/textarea."""
     expression = (
         "(() => {"
         "const el = document.activeElement;"
-        "if (!el || !['INPUT','TEXTAREA'].includes(el.tagName)) return 'not-focused';"
-        "el.value = '';"
+        "if (!el || (!['INPUT','TEXTAREA'].includes(el.tagName) && !el.isContentEditable)) return 'not-focused';"
+        "const kind = el.isContentEditable ? 'contenteditable' : 'input';"
+        "if (el.isContentEditable) { el.innerHTML = ''; } else { el.value = ''; }"
         "el.dispatchEvent(new Event('input', {bubbles: true}));"
         "el.dispatchEvent(new Event('change', {bubbles: true}));"
-        "return 'cleared';"
+        "return kind;"
         "})()"
     )
     cmd = ["camofox-browser", "eval", expression]
     if tab_id:
         cmd.append(tab_id)
-    run(cmd, cwd=cwd)
+    result = run(cmd, cwd=cwd)
+    value = result.get("result") if isinstance(result, dict) else ""
+    return value.strip() if isinstance(value, str) else ""
 
 
 def press(key: str, tab_id: Optional[str] = None, cwd: Optional[Path] = None) -> None:

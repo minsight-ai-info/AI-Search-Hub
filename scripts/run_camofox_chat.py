@@ -109,7 +109,14 @@ SITE_CONFIG = {
             "内容由 Kimi 生成",
             "由 Kimi 生成",
         ],
-        "custom_answer_js": None,
+        "custom_answer_js": (
+            "(() => {"
+            "const assistant = Array.from(document.querySelectorAll('.chat-content-item-assistant')).at(-1);"
+            "if (!assistant) return '';"
+            "const finalBlock = Array.from(assistant.querySelectorAll('.markdown-container')).at(-1);"
+            "return (finalBlock?.innerText || '').trim();"
+            "})()"
+        ),
     },
     "doubao": {
         "url": "https://www.doubao.com/chat/?channel=sysceo&from_login=1",

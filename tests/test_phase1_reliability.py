@@ -138,6 +138,39 @@ class DoubaoResponseTests(unittest.TestCase):
         self.assertEqual(chat.parse_doubao_sse_error(body), "rate limited")
 
 
+class KimiResponseTests(unittest.TestCase):
+    def test_contenteditable_clear_script_supports_kimi_composer(self):
+        import camofox_runner
+        with patch.object(camofox_runner, "run") as run_command:
+            camofox_runner._clear_focused_via_js(tab_id="tab")
+        expression = run_command.call_args.args[0][2]
+        self.assertIn("el.isContentEditable", expression)
+        self.assertIn("el.innerHTML = ''", expression)
+
+    def test_contenteditable_input_is_set_via_js_not_cli_type(self):
+        import camofox_runner
+        with (
+            patch.object(camofox_runner, "click"),
+            patch.object(camofox_runner, "run", return_value={"result": "contenteditable"}) as run_command,
+        ):
+            camofox_runner.type_text("e1", "KIMI_PROBE", tab_id="tab")
+        commands = [call.args[0] for call in run_command.call_args_list]
+        self.assertTrue(any("InputEvent" in command[2] for command in commands if command[1] == "eval"))
+        self.assertFalse(any(command[1] == "type" for command in commands))
+
+    def test_kimi_custom_extractor_targets_final_markdown_block(self):
+        script = chat.SITE_CONFIG["kimi"]["custom_answer_js"]
+        self.assertIn("chat-content-item-assistant", script)
+        self.assertIn("markdown-container", script)
+
+    def test_runner_preserves_multiline_eval_result(self):
+        import camofox_runner
+        completed = type("Completed", (), {"returncode": 0, "stdout": "ok: true\nresult: first line\nsecond line\nresultType: string\ntruncated: false\n", "stderr": ""})()
+        with patch.object(camofox_runner.subprocess, "run", return_value=completed):
+            result = camofox_runner.run(["camofox-browser", "eval", "1+1"])
+        self.assertEqual(result["result"], "first line\nsecond line")
+
+
 class BatchRunnerTests(unittest.TestCase):
     def test_batch_command_sets_per_platform_output_and_quality_gate(self):
         sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
