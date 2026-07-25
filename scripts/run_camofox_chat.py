@@ -569,6 +569,49 @@ def extract_answer_from_snapshot(
     return answer.strip()
 
 
+def parse_doubao_sse_error(body: str) -> str:
+    """Read the user-facing error from a Doubao STREAM_ERROR SSE payload."""
+    for block in body.split("\n\n"):
+        if "event: STREAM_ERROR" not in block:
+            continue
+        for line in block.splitlines():
+            if not line.startswith("data:"):
+                continue
+            try:
+                data = json.loads(line[len("data:"):].strip())
+            except json.JSONDecodeError:
+                return "Doubao returned an unparseable stream error"
+            message = data.get("error_msg") if isinstance(data, dict) else None
+            return message if isinstance(message, str) and message else "Doubao rejected the request"
+    return ""
+
+
+def install_doubao_stream_monitor(tab_id: str, cwd: Optional[Path] = None) -> None:
+    """Capture an SSE STREAM_ERROR that Doubao otherwise leaves out of the DOM."""
+    expression = (
+        "(() => {"
+        "if (window.__hermesDoubaoMonitorInstalled) return 'already-installed';"
+        "window.__hermesDoubaoMonitorInstalled = true; window.__hermesDoubaoSseError = '';"
+        "const originalFetch = window.fetch.bind(window);"
+        "window.fetch = async (...args) => { const response = await originalFetch(...args);"
+        "if (String(args[0]).includes('/chat/completion')) response.clone().text().then(text => {"
+        "const match = text.match(/event:\\s*STREAM_ERROR[\\s\\S]*?data:\\s*(\\{[^\\n]*\\})/);"
+        "if (!match) return; try { const data = JSON.parse(match[1]);"
+        "window.__hermesDoubaoSseError = data.error_msg || 'Doubao rejected the request'; } catch (_) {"
+        "window.__hermesDoubaoSseError = 'Doubao returned an unparseable stream error'; } });"
+        "return response; }; return 'installed'; })()"
+    )
+    run(["camofox-browser", "eval", expression, tab_id], cwd=cwd)
+
+
+def get_doubao_stream_error(tab_id: str, cwd: Optional[Path] = None) -> str:
+    result = run(["camofox-browser", "eval", "window.__hermesDoubaoSseError || ''", tab_id], cwd=cwd)
+    value = result.get("result")
+    if value is None:
+        value = result.get("raw", "")
+    return value.strip() if isinstance(value, str) else ""
+
+
 def decode_doubao_payload(payload: str) -> tuple[str, bool]:
     """Return the latest Doubao assistant text and whether its stream has ended."""
     try:
@@ -611,6 +654,10 @@ def collect_answer_from_snapshot(
 
     while time.time() < deadline:
         snap = snapshot(tab_id=tab_id, cwd=cwd)
+        if site == "doubao":
+            stream_error = get_doubao_stream_error(tab_id=tab_id, cwd=cwd)
+            if stream_error:
+                raise RuntimeError(f"[doubao] generation rejected by platform: {stream_error}")
         stream_finished = True
         if custom_js:
             try:
@@ -742,6 +789,8 @@ def main(default_site: Optional[str] = None) -> int:
                 f"[{site}] could not find input box in snapshot:\n{snap}"
             )
 
+        if site == "doubao":
+            install_doubao_stream_monitor(tab_id=tab_id, cwd=repo_root)
         type_text(input_ref, args.prompt, tab_id=tab_id, cwd=repo_root)
         submit_snapshot = snapshot(tab_id=tab_id, cwd=repo_root)
         submit_prompt(site, submit_snapshot, tab_id, cwd=repo_root)

@@ -133,6 +133,10 @@ class DoubaoResponseTests(unittest.TestCase):
         self.assertEqual(chat.decode_doubao_payload(payload), ("最终回答正文", True))
         self.assertEqual(chat.decode_doubao_payload('{"text":"生成中","streaming":true}'), ("生成中", False))
 
+    def test_doubao_sse_rate_limit_is_extracted(self):
+        body = 'id: 0\nevent: STREAM_ERROR\ndata: {"error_code":710022004,"error_msg":"rate limited"}\n\n'
+        self.assertEqual(chat.parse_doubao_sse_error(body), "rate limited")
+
 
 class BatchRunnerTests(unittest.TestCase):
     def test_batch_command_sets_per_platform_output_and_quality_gate(self):
