@@ -169,16 +169,36 @@ def find_repo_root(start: Optional[str]) -> Path:
     raise RuntimeError("Could not find the repository root containing camofox scripts.")
 
 
-def wait_for_login(site: str, login_timeout: int) -> None:
+def is_login_page(snapshot_text: str, site: str) -> bool:
+    """Heuristic check whether the page still shows login/signup UI."""
+    lowered = snapshot_text.lower()
+    config = SITE_CONFIG[site]
+    login_markers = [
+        config.get("login_text", "").lower(),
+        config.get("login_signup_text", "").lower(),
+        "sign in",
+        "log in",
+        "登录",
+        "注册",
+        "sign up",
+    ]
+    return any(m and m in lowered for m in login_markers if m)
+
+
+def wait_for_login(site: str, login_timeout: int) -> bool:
+    """
+    Wait for the user to complete manual login in the camofox browser.
+    Returns True if login no longer appears required, False if timed out.
+    """
     print(
-        f"[{site}] login may be required. If a login page appears, complete login in the camofox browser; "
-        f"execution will continue automatically for up to {login_timeout} seconds.",
+        f"[{site}] 检测到需要登录。请切换到 camofox 浏览器（Firefox 窗口）完成登录，"
+        f"脚本会自动继续，最长等待 {login_timeout} 秒。",
         flush=True,
     )
     deadline = time.time() + login_timeout
     last_snapshot = ""
     stable = 0
-    config = SITE_CONFIG[site]
+    logged_in = False
 
     while time.time() < deadline:
         text = snapshot()
@@ -188,25 +208,21 @@ def wait_for_login(site: str, login_timeout: int) -> None:
             last_snapshot = text
             stable = 0
 
-        # Detect still-on-login-page after login timeout window.
         if stable >= 3:
-            lowered = text.lower()
-            login_markers = [
-                config["login_text"].lower(),
-                config.get("login_signup_text", "").lower(),
-                "sign in",
-                "log in",
-                "登录",
-                "注册",
-                "sign up",
-            ]
-            if any(marker and marker in lowered for marker in login_markers if marker):
-                continue
-            return
+            if not is_login_page(text, site):
+                logged_in = True
+                print(f"[{site}] 登录成功，继续执行。", flush=True)
+                return True
 
         wait_seconds(1.0)
 
-    print(f"[{site}] login wait timed out after {login_timeout} seconds.", flush=True)
+    if not logged_in and last_snapshot and is_login_page(last_snapshot, site):
+        print(
+            f"[{site}] 等待登录超时（{login_timeout} 秒），页面仍显示登录 UI。"
+            f"请先在 camofox 浏览器中完成登录，然后重新运行本命令。",
+            flush=True,
+        )
+    return False
 
 
 def normalize_text(text: str, noise_substrings: Optional[list[str]] = None) -> str:
@@ -369,21 +385,10 @@ def main(default_site: Optional[str] = None) -> int:
 
         # Detect whether we are still on the login page after waiting.
         snap = snapshot(tab_id=tab_id, cwd=repo_root)
-        login_markers = [
-            config.get("login_text", "").lower(),
-            config.get("login_signup_text", "").lower(),
-            "sign in",
-            "log in",
-            "登录",
-            "注册",
-            "sign up",
-        ]
-        lowered = snap.lower()
-        still_login = any(m and m in lowered for m in login_markers if m)
-        if still_login:
+        if is_login_page(snap, site):
             print(
-                f"[{site}] still appears to be on the login page; the run may fail "
-                f"until you complete login and rerun.",
+                f"[{site}] 仍停留在登录页，本次运行可能失败；"
+                f"请先在 camofox 浏览器完成登录，然后重新运行。",
                 flush=True,
             )
         else:
