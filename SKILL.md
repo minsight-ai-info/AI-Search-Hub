@@ -42,7 +42,7 @@ cd /home/wang/ai-search-hub
 python3 scripts/run_camofox_chat.py \
   --site qwen \
   --prompt "请检索并区分官方资料、独立测试和媒体传闻。" \
-  --timeout 180 \
+  --timeout 250 \
   --min-answer-chars 300 \
   --output /home/wang/artifacts/documents/answer.txt
 ```
@@ -55,7 +55,7 @@ Use this only when cross-platform comparison is useful:
 python3 scripts/run_camofox_batch.py \
   --sites qwen doubao kimi minimaxi longcat \
   --prompt "你的研究问题" \
-  --timeout 180 \
+  --timeout 250 \
   --min-answer-chars 300 \
   --stable-rounds 3 \
   --output-dir /home/wang/artifacts/documents/ai-search-hub-run

@@ -181,6 +181,16 @@ class NewDomesticPlatformTests(unittest.TestCase):
         self.assertIn("InputEvent", command[2])
 
 
+class TimeoutDefaultTests(unittest.TestCase):
+    def test_single_and_batch_timeout_defaults_are_250_seconds(self):
+        import run_camofox_batch as batch
+
+        with patch.object(sys, "argv", ["run_camofox_chat.py", "--site", "qwen", "--prompt", "probe"]):
+            self.assertEqual(chat.parse_args().timeout, 250)
+        with patch.object(sys, "argv", ["run_camofox_batch.py", "--sites", "qwen", "--prompt", "probe", "--output-dir", "/tmp/out"]):
+            self.assertEqual(batch.parse_args().timeout, 250)
+
+
 class BatchRunnerTests(unittest.TestCase):
     def test_batch_command_sets_per_platform_output_and_quality_gate(self):
         sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))

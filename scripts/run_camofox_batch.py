@@ -72,7 +72,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--sites", nargs="+", required=True, choices=sorted(SITE_CONFIG))
     parser.add_argument("--prompt", required=True)
-    parser.add_argument("--timeout", type=int, default=180)
+    parser.add_argument("--timeout", type=int, default=250)
     parser.add_argument("--min-answer-chars", type=int, default=200)
     parser.add_argument("--interval", type=float, default=2.0)
     parser.add_argument("--stable-rounds", type=int, default=3)

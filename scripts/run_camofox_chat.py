@@ -159,7 +159,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--timeout",
         type=int,
-        default=180,
+        default=250,
         help="Maximum seconds to wait for the final answer.",
     )
     parser.add_argument(
