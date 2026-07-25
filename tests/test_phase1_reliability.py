@@ -195,6 +195,11 @@ class BatchRunnerTests(unittest.TestCase):
         self.assertTrue(batch.is_retriable_open_error("NS_BINDING_ABORTED"))
         self.assertTrue(batch.is_retriable_open_error("NS_ERROR_UNKNOWN_HOST"))
         self.assertFalse(batch.is_retriable_open_error("invalid site configuration"))
+    def test_poll_rpc_timeout_is_retriable(self):
+        import run_camofox_batch as batch
+
+        self.assertTrue(batch.is_retriable_poll_error("camofox-browser failed (rc=5): Error: Request timed out after 20000ms"))
+        self.assertFalse(batch.is_retriable_poll_error("[doubao] generation rejected by platform: rate limited"))
 
 
 class PromptSubmissionTests(unittest.TestCase):

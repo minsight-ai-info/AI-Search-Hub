@@ -55,6 +55,16 @@ def is_retriable_open_error(message: str) -> bool:
     ))
 
 
+def is_retriable_poll_error(message: str) -> bool:
+    """Browser RPC timeouts are transient; keep the model tab alive until its deadline."""
+    lower = message.lower()
+    return any(marker in lower for marker in (
+        "request timed out",
+        "ns_binding_aborted",
+        "ns_error_unknown_host",
+    ))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Prepare chat tabs serially, then poll all platform answers in one coordinated loop."
@@ -174,7 +184,12 @@ def main() -> int:
                 tasks.remove(task)
                 continue
             if isinstance(answer_or_error, Exception):
-                records.append({"site": site, "ok": False, "reason": f"poll failed: {answer_or_error}", "duration_seconds": round(elapsed, 1)})
+                error_message = str(answer_or_error)
+                if is_retriable_poll_error(error_message):
+                    task["poll_retries"] = task.get("poll_retries", 0) + 1
+                    print(f"[{site}] transient browser poll timeout; keeping tab alive (retry {task['poll_retries']})", flush=True)
+                    continue
+                records.append({"site": site, "ok": False, "reason": f"poll failed: {error_message}", "duration_seconds": round(elapsed, 1)})
                 close_tab(task["tab_id"], repo_root)
                 tasks.remove(task)
                 continue
