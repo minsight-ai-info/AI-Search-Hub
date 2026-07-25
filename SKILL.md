@@ -38,13 +38,13 @@ Never ask for, receive, or type passwords, OTPs, cookies, or other secrets. For 
 ## Single platform
 
 ```bash
-cd /home/wang/ai-search-hub
+cd ~/ai-search-hub
 python3 scripts/run_camofox_chat.py \
   --site qwen \
   --prompt "请检索并区分官方资料、独立测试和媒体传闻。" \
   --timeout 250 \
   --min-answer-chars 300 \
-  --output /home/wang/artifacts/documents/answer.txt
+  --output ~/artifacts/documents/answer.txt
 ```
 
 ## Batch platform execution
@@ -58,7 +58,7 @@ python3 scripts/run_camofox_batch.py \
   --timeout 250 \
   --min-answer-chars 300 \
   --stable-rounds 3 \
-  --output-dir /home/wang/artifacts/documents/ai-search-hub-run
+  --output-dir ~/artifacts/documents/ai-search-hub-run
 ```
 
 The runner serializes navigation/submission, then polls platform tabs concurrently. A transient camofox RPC timeout is retried without closing the tab. Inspect `batch-summary.json` before reporting any multi-platform conclusion.
@@ -78,4 +78,4 @@ python3 -m unittest tests/test_phase1_reliability.py -q
 python3 -m py_compile scripts/camofox_runner.py scripts/run_camofox_chat.py scripts/run_camofox_batch.py
 ```
 
-Put generated results and screenshots under `/home/wang/artifacts/`; do not add them to git.
+Put generated results and screenshots under `~/artifacts/`; do not add them to git.

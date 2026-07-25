@@ -44,13 +44,13 @@ camofox-browser session save longcat
 ## 单平台调用
 
 ```bash
-cd /home/wang/ai-search-hub
+cd ~/ai-search-hub
 python3 scripts/run_camofox_chat.py \
   --site qwen \
   --prompt "请整理这个问题的可核验信息，并列出来源。" \
   --timeout 250 \
   --min-answer-chars 300 \
-  --output /home/wang/artifacts/documents/qwen-answer.txt
+  --output ~/artifacts/documents/qwen-answer.txt
 ```
 
 可用 `--site`：`qwen`、`doubao`、`kimi`、`minimaxi`、`longcat`。
@@ -66,7 +66,7 @@ python3 scripts/run_camofox_batch.py \
   --timeout 250 \
   --min-answer-chars 300 \
   --stable-rounds 3 \
-  --output-dir /home/wang/artifacts/documents/ai-search-hub-run
+  --output-dir ~/artifacts/documents/ai-search-hub-run
 ```
 
 输出目录包含每个平台的 `<site>.txt` 以及 `batch-summary.json`。短暂的 camofox RPC 超时会保留 tab 并重试；平台总超时或明确的限流错误才会标为失败。
@@ -88,7 +88,7 @@ python3 -m unittest tests/test_phase1_reliability.py -q
 python3 -m py_compile scripts/camofox_runner.py scripts/run_camofox_chat.py scripts/run_camofox_batch.py
 ```
 
-测试输出、截图和临时调试文件统一写入 `/home/wang/artifacts/`，不提交到仓库。
+测试输出、截图和临时调试文件统一写入 `~/artifacts/`，不提交到仓库。
 
 ## 目录
 
