@@ -1,7 +1,7 @@
 interface:
-  display_name: "AI Search Hub"
-  short_description: "Run AI Search Hub browser scripts across supported AI platforms"
-  default_prompt: "Use $ai-search-hub to run one of the repository chat sites with automatic Chrome debug startup and login waiting."
+  display_name: "AI Search Hub（国内平台）"
+  short_description: "Use verified domestic AI platforms through camofox sessions"
+  default_prompt: "Use $ai-search-hub to research through Qwen, Doubao, Kimi, MiniMax Agent, or LongCat. Do not attempt foreign platforms."
 
 policy:
   allow_implicit_invocation: true
