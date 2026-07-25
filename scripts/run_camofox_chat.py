@@ -9,8 +9,11 @@ from camofox_runner import (
     find_ref_by_text,
     get_text,
     get_url,
+    list_sessions,
+    load_session,
     open_url,
     press,
+    save_session,
     snapshot,
     type_text,
     wait_seconds,
@@ -348,12 +351,46 @@ def main(default_site: Optional[str] = None) -> int:
     repo_root = find_repo_root(args.repo_root)
 
     config = SITE_CONFIG[site]
-    tab_id = open_url(config["url"], cwd=repo_root)
-    print(f"[{site}] opened {config['url']} tab={tab_id}", flush=True)
 
-    try:
+    # ------------------------------------------------------------------ session
+    existing_sessions = list_sessions(cwd=repo_root)
+    if site in existing_sessions:
+        print(f"[{site}] reusing saved camofox session: {site}", flush=True)
+        tab_id = open_url(config["url"], cwd=repo_root)
+        print(f"[{site}] opened {config['url']} tab={tab_id}", flush=True)
+        load_session(site, tab_id=tab_id, cwd=repo_root)
+        print(f"[{site}] session loaded", flush=True)
+    else:
+        print(f"[{site}] no saved session found; opening fresh", flush=True)
+        tab_id = open_url(config["url"], cwd=repo_root)
+        print(f"[{site}] opened {config['url']} tab={tab_id}", flush=True)
+
         wait_for_login(site, args.login_timeout)
 
+        # Detect whether we are still on the login page after waiting.
+        snap = snapshot(tab_id=tab_id, cwd=repo_root)
+        login_markers = [
+            config.get("login_text", "").lower(),
+            config.get("login_signup_text", "").lower(),
+            "sign in",
+            "log in",
+            "登录",
+            "注册",
+            "sign up",
+        ]
+        lowered = snap.lower()
+        still_login = any(m and m in lowered for m in login_markers if m)
+        if still_login:
+            print(
+                f"[{site}] still appears to be on the login page; the run may fail "
+                f"until you complete login and rerun.",
+                flush=True,
+            )
+
+        print(f"[{site}] saving session '{site}' for reuse", flush=True)
+        save_session(site, tab_id=tab_id, cwd=repo_root)
+
+    try:
         snap = snapshot(tab_id=tab_id, cwd=repo_root)
         input_ref = find_ref_by_role(snap, config["input_role"], config.get("input_hint"))
         if not input_ref:

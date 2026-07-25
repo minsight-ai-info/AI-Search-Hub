@@ -98,10 +98,22 @@ camofox-browser session save qwen
 # The wrapper will reuse this session on subsequent runs.
 ```
 
+The wrapper also handles sessions automatically:
+
+- First run: detects no saved session, opens fresh, waits for login, saves session after successful login.
+- Subsequent runs: detects saved session, loads it, skips login wait.
+- If login markers are still present after waiting, the wrapper warns you and continues; complete login in the camofox browser and rerun to capture the session.
+
 To list saved sessions:
 
 ```bash
 camofox-browser session list
+```
+
+To delete a stale session:
+
+```bash
+camofox-browser session delete qwen
 ```
 
 ## Site Notes

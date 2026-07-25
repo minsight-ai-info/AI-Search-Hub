@@ -110,6 +110,35 @@ def wait_seconds(seconds: float) -> None:
     time.sleep(seconds)
 
 
+def list_sessions(cwd: Optional[Path] = None) -> list[str]:
+    """List saved camofox session names."""
+    result = run(["camofox-browser", "session", "list", "--format", "json"], cwd=cwd)
+    raw = result.get("raw", "")
+    try:
+        data = json.loads(raw)
+        if isinstance(data, list):
+            return [str(item) for item in data if item]
+    except (json.JSONDecodeError, TypeError):
+        pass
+    return []
+
+
+def save_session(name: str, tab_id: Optional[str] = None, cwd: Optional[Path] = None) -> None:
+    """Save the current tab state as a named camofox session."""
+    cmd = ["camofox-browser", "session", "save", name]
+    if tab_id:
+        cmd.append(tab_id)
+    run(cmd, cwd=cwd)
+
+
+def load_session(name: str, tab_id: Optional[str] = None, cwd: Optional[Path] = None) -> None:
+    """Load a saved camofox session into the current or specified tab."""
+    cmd = ["camofox-browser", "session", "load", name]
+    if tab_id:
+        cmd.append(tab_id)
+    run(cmd, cwd=cwd)
+
+
 # ---------------------------------------------------------------------------
 # Lightweight selector helpers built on top of snapshot text
 # ---------------------------------------------------------------------------
