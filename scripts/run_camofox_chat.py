@@ -75,7 +75,7 @@ SITE_CONFIG = {
     "kimi": {
         "url": "https://kimi.moonshot.cn/",
         "input_role": "textbox",
-        "input_hint": "",
+        "input_hint": "Ask anything, or task an agent...",
         "submit_key": "Enter",
         "login_text": "登录",
         "answer_roles": ("paragraph",),
@@ -87,7 +87,7 @@ SITE_CONFIG = {
     "doubao": {
         "url": "https://www.doubao.com/chat/?channel=sysceo&from_login=1",
         "input_role": "textbox",
-        "input_hint": "",
+        "input_hint": "发消息...",
         "submit_key": "Enter",
         "login_text": "登录",
         "answer_roles": ("paragraph",),
@@ -177,6 +177,9 @@ def is_login_page(snapshot_text: str, site: str) -> bool:
     """Heuristic check whether the page still shows login/signup UI."""
     lowered = snapshot_text.lower()
     config = SITE_CONFIG[site]
+    input_hint = config.get("input_hint", "").lower()
+    if input_hint and input_hint in lowered:
+        return False
     login_markers = [
         config.get("login_text", "").lower(),
         config.get("login_signup_text", "").lower(),

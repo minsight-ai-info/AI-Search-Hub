@@ -77,7 +77,35 @@ def click(ref: str, tab_id: Optional[str] = None, cwd: Optional[Path] = None) ->
 
 
 def type_text(ref: str, text: str, tab_id: Optional[str] = None, cwd: Optional[Path] = None) -> None:
+    # camofox-browser `type` appends rather than replacing in some versions;
+    # focus the field and clear it via JS before typing.
+    try:
+        click(ref, tab_id=tab_id, cwd=cwd)
+    except Exception:
+        pass
+    try:
+        _clear_focused_via_js(tab_id=tab_id, cwd=cwd)
+    except Exception:
+        pass
     cmd = ["camofox-browser", "type", ref, text]
+    if tab_id:
+        cmd.append(tab_id)
+    run(cmd, cwd=cwd)
+
+
+def _clear_focused_via_js(tab_id: Optional[str] = None, cwd: Optional[Path] = None) -> None:
+    """Best-effort clear of the currently focused input/textarea."""
+    expression = (
+        "(() => {"
+        "const el = document.activeElement;"
+        "if (!el || !['INPUT','TEXTAREA'].includes(el.tagName)) return 'not-focused';"
+        "el.value = '';"
+        "el.dispatchEvent(new Event('input', {bubbles: true}));"
+        "el.dispatchEvent(new Event('change', {bubbles: true}));"
+        "return 'cleared';"
+        "})()"
+    )
+    cmd = ["camofox-browser", "eval", expression]
     if tab_id:
         cmd.append(tab_id)
     run(cmd, cwd=cwd)
@@ -174,20 +202,29 @@ def fill_credentials(
 def find_ref_by_role(snapshot_text: str, role: str, name_hint: Optional[str] = None) -> Optional[str]:
     """
     Light parser for camofox/Hermes accessibility snapshot lines.
-    Handles both:
+    Handles:
       - textbox "How can I help you today?" [e8]:
       - textbox "How can I help you today?" [e8]
+      - textbox [e20]:
+      - textbox [e20]
     """
     import re
-    pattern = rf'-\s+{re.escape(role)}\s+"([^"]+)"\s+\[([^\]]+)\]'
+    patterns = [
+        rf'-\s+{re.escape(role)}\s+"([^"]+)"\s+\[([^\]]+)\]',
+        rf'-\s+{re.escape(role)}\s+\[([^\]]+)\]',
+    ]
     for line in snapshot_text.splitlines():
-        m = re.search(pattern, line)
-        if not m:
-            continue
-        label, ref = m.group(1), m.group(2)
-        if name_hint and name_hint.lower() not in label.lower():
-            continue
-        return ref
+        for pattern in patterns:
+            m = re.search(pattern, line)
+            if not m:
+                continue
+            if len(m.groups()) == 2:
+                label, ref = m.group(1), m.group(2)
+            else:
+                label, ref = "", m.group(1)
+            if name_hint and name_hint.lower() not in label.lower():
+                continue
+            return ref
     return None
 
 
