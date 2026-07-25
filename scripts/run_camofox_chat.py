@@ -295,13 +295,19 @@ def extract_answer_from_snapshot(
     if not candidate_lines:
         return ""
 
-    # Remove the user's question from the candidate lines.
+    # Remove the user's question from the candidate lines, but keep any
+    # trailing answer text that happens to share the same line.
     normalized_question = normalize_text(question, noise)
     if normalized_question:
-        candidate_lines = [
-            line for line in candidate_lines
-            if normalized_question not in line
-        ]
+        cleaned = []
+        for line in candidate_lines:
+            if normalized_question in line:
+                rest = line.replace(normalized_question, "").strip()
+                if rest:
+                    cleaned.append(rest)
+            else:
+                cleaned.append(line)
+        candidate_lines = cleaned
 
     # Prefer lines that contain answer indicators.
     if answer_contains:
