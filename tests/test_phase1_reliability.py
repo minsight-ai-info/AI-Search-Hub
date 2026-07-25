@@ -127,6 +127,13 @@ class CompletionGateTests(unittest.TestCase):
 
     def test_search_status_fails_research_answer_length_gate(self):
         self.assertFalse(chat.is_answer_ready("doubao", "搜索 4 个关键词，参考 24 篇资料", "", 200))
+class DoubaoResponseTests(unittest.TestCase):
+    def test_doubao_payload_requires_non_streaming_final_message(self):
+        payload = '{"text":"最终回答正文","streaming":false}'
+        self.assertEqual(chat.decode_doubao_payload(payload), ("最终回答正文", True))
+        self.assertEqual(chat.decode_doubao_payload('{"text":"生成中","streaming":true}'), ("生成中", False))
+
+
 class BatchRunnerTests(unittest.TestCase):
     def test_batch_command_sets_per_platform_output_and_quality_gate(self):
         sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))

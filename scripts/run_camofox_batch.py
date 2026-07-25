@@ -20,6 +20,7 @@ from camofox_runner import (
 from run_camofox_chat import (
     SITE_CONFIG,
     clean_custom_answer,
+    decode_doubao_payload,
     extract_answer_from_snapshot,
     has_login_blocker,
     is_answer_ready,
@@ -113,6 +114,8 @@ def extract_candidate(task: dict, prompt: str, repo_root: Path) -> tuple[str, st
     if custom_js:
         result = run(["camofox-browser", "eval", custom_js, task["tab_id"]], cwd=repo_root)
         raw = result.get("result", "") or result.get("raw", "")
+        if site == "doubao" and isinstance(raw, str):
+            raw, _ = decode_doubao_payload(raw)
         answer = clean_custom_answer(raw, prompt, site) if isinstance(raw, str) else ""
     else:
         answer = extract_answer_from_snapshot(snap, site, prompt)

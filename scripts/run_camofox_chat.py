@@ -1,4 +1,5 @@
 import argparse
+import json
 import sys
 import time
 from pathlib import Path
@@ -120,10 +121,11 @@ SITE_CONFIG = {
         "noise_substrings": COMMON_NOISE_SUBSTRINGS,
         "custom_answer_js": (
             "(() => {"
-            "const wrappers = Array.from(document.querySelectorAll('div.flex.flex-col.flex-grow.max-w-full.min-w-0'));"
-            "if (!wrappers.length) return '';"
-            "const lastWrapper = wrappers[wrappers.length - 1];"
-            "return (lastWrapper.innerText || lastWrapper.textContent || '').trim();"
+            "const messages = Array.from(document.querySelectorAll('div[data-message-id]'));"
+            "const assistant = messages.filter(node => node.querySelector('[data-streaming]')).at(-1);"
+            "if (!assistant) return JSON.stringify({text: '', streaming: true});"
+            "const streamNode = assistant.querySelector('[data-streaming]');"
+            "return JSON.stringify({text: (assistant.innerText || assistant.textContent || '').trim(), streaming: streamNode?.dataset.streaming !== 'false'});"
             "})()"
         ),
     },
@@ -567,6 +569,20 @@ def extract_answer_from_snapshot(
     return answer.strip()
 
 
+def decode_doubao_payload(payload: str) -> tuple[str, bool]:
+    """Return the latest Doubao assistant text and whether its stream has ended."""
+    try:
+        data = json.loads(payload)
+    except (json.JSONDecodeError, TypeError):
+        return "", False
+    if not isinstance(data, dict):
+        return "", False
+    text = data.get("text", "")
+    if not isinstance(text, str):
+        text = ""
+    return text, data.get("streaming") is False
+
+
 def clean_custom_answer(answer: str, question: str, site: str) -> str:
     """Remove known transient status text from a DOM-selector extraction."""
     import re
@@ -595,6 +611,7 @@ def collect_answer_from_snapshot(
 
     while time.time() < deadline:
         snap = snapshot(tab_id=tab_id, cwd=cwd)
+        stream_finished = True
         if custom_js:
             try:
                 js_result = run(
@@ -602,13 +619,16 @@ def collect_answer_from_snapshot(
                     cwd=cwd,
                 )
                 raw_answer = js_result.get("result", "") or js_result.get("raw", "")
+                if site == "doubao" and isinstance(raw_answer, str):
+                    raw_answer, stream_finished = decode_doubao_payload(raw_answer)
                 answer = clean_custom_answer(raw_answer, question, site) if isinstance(raw_answer, str) else ""
             except Exception:
                 answer = ""
+                stream_finished = False
         else:
             answer = extract_answer_from_snapshot(snap, site, question)
 
-        if not is_answer_ready(site, answer, snap, min_answer_chars):
+        if not stream_finished or not is_answer_ready(site, answer, snap, min_answer_chars):
             stable_count = 0
             wait_seconds(interval)
             continue
